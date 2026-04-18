@@ -1,7 +1,9 @@
 {
   "name": "Mera Paisa",
   "short_name": "Mera Paisa",
+  "id": "/MeraPaise/",
   "start_url": "/MeraPaise/",
+  "scope": "/MeraPaise/",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#000000",

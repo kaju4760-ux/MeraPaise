@@ -64,14 +64,20 @@
     align-items: flex-start;
     justify-content: space-between;
   }
+  @keyframes floatTitleGlow {
+    0%, 100% { transform: translateY(0); text-shadow: 0 0 5px rgba(74,222,128,0.05); }
+    50% { transform: translateY(-1.5px); text-shadow: 0 0 12px rgba(74,222,128,0.3), 0 0 20px rgba(74,222,128,0.1); }
+  }
   .header-left h1 {
     font-family: 'Playfair Display', serif;
     font-size: 26px;
     font-weight: 700;
     letter-spacing: -0.5px;
     line-height: 1.1;
+    animation: floatTitleGlow 6s ease-in-out infinite;
+    display: inline-block;
   }
-  .header-left h1 span { color: var(--green); }
+  .header-left h1 span { color: var(--green); text-shadow: inherit; }
   .header-left p { font-size: 12px; color: var(--text2); margin-top: 4px; }
   .date-chip {
     background: var(--surface2);
@@ -210,12 +216,14 @@
     font-weight: 600;
     cursor: pointer;
     font-family: 'DM Sans', sans-serif;
-    transition: transform 0.15s, opacity 0.15s;
+    transition: transform 0.15s, opacity 0.15s, box-shadow 0.2s;
     letter-spacing: 0.2px;
   }
   .btn:active { transform: scale(0.97); opacity: 0.85; }
   .btn-in { background: var(--green); color: #0a1a10; }
+  .btn-in:hover { box-shadow: 0 0 20px rgba(74,222,128,0.5); }
   .btn-out { background: var(--red); color: #1a0a0a; }
+  .btn-out:hover { box-shadow: 0 0 20px rgba(248,113,113,0.5); }
 
   /* ── Entries ── */
   .entries-section { display: none; }
@@ -239,6 +247,11 @@
     font-size: 11px; color: var(--red); background: var(--red-dim);
     border: 0.5px solid var(--red-border); border-radius: 20px;
     padding: 4px 10px; cursor: pointer; font-family: 'DM Sans', sans-serif;
+    transition: box-shadow 0.2s, background 0.2s;
+  }
+  .clear-btn:hover {
+    box-shadow: 0 0 12px rgba(248,113,113,0.4);
+    background: rgba(248,113,113,0.2);
   }
 
   .entry-item {
@@ -294,8 +307,8 @@
   .bar-top { display: flex; justify-content: space-between; margin-bottom: 5px; }
   .bar-top span { font-size: 12px; color: var(--text2); }
   .bar-top strong { font-size: 12px; font-weight: 600; }
-  .bar-track { height: 10px; background: var(--surface2); border-radius: 5px; overflow: hidden; }
-  .bar-fill { height: 100%; border-radius: 5px; transition: width 0.6s cubic-bezier(.4,0,.2,1); }
+  .bar-track { height: 10px; background: var(--surface2); border-radius: 5px; overflow: hidden; position: relative; }
+  .bar-fill { height: 100%; border-radius: 5px; transition: width 0.6s cubic-bezier(.4,0,.2,1); position: relative; overflow: hidden; }
   .bf-green { background: var(--green); }
   .bf-red { background: var(--red); }
   .bf-blue { background: var(--paytm); }
@@ -305,8 +318,21 @@
   .cat-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
   .cat-name { font-size: 13px; color: var(--text2); flex: 1; }
   .cat-val { font-size: 13px; font-weight: 500; }
-  .cat-bar { flex: 2; height: 4px; background: var(--surface2); border-radius: 2px; overflow: hidden; }
-  .cat-bar-fill { height: 100%; border-radius: 2px; }
+  .cat-bar { flex: 2; height: 4px; background: var(--surface2); border-radius: 2px; overflow: hidden; position: relative; }
+  .cat-bar-fill { height: 100%; border-radius: 2px; position: relative; overflow: hidden; transition: width 0.6s cubic-bezier(.4,0,.2,1); }
+
+  /* ── Shimmer Effect for Bars ── */
+  @keyframes shimmer {
+    0% { transform: translateX(-150%); }
+    50%, 100% { transform: translateX(250%); }
+  }
+  .bar-fill::after, .cat-bar-fill::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; bottom: 0; width: 60%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+    animation: shimmer 2.5s infinite;
+  }
 
   /* ── Bottom Nav ── */
   .bottom-nav {
@@ -336,9 +362,48 @@
     pointer-events: none;
   }
   .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* ── Interactive Glow ── */
+  #cursorGlow {
+    position: fixed;
+    top: -1000px;
+    left: -1000px;
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, rgba(74, 222, 128, 0.05) 0%, transparent 60%);
+    border-radius: 50%;
+    pointer-events: none;
+    transform: translate(-50%, -50%);
+    z-index: 0;
+    transition: background 0.3s ease;
+  }
+
+  /* ── Floating Rupees ── */
+  #rupees-container {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    pointer-events: none; z-index: 0; overflow: hidden;
+  }
+  .rupee-float {
+    position: absolute; top: -50px;
+    color: rgba(74, 222, 128, 0.15);
+    font-family: 'Playfair Display', serif;
+    animation: rainRupees linear infinite;
+  }
+  @keyframes rainRupees {
+    0% { transform: translateY(0) rotate(0deg); opacity: 0; }
+    10% { opacity: 1; }
+    90% { opacity: 1; }
+    100% { transform: translateY(110vh) rotate(360deg); opacity: 0; }
+  }
 </style>
 </head>
 <body>
+
+<!-- Responsive cursor tracking glow -->
+<div id="cursorGlow"></div>
+
+<!-- Background Rupees Container -->
+<div id="rupees-container"></div>
 
 <div class="wrapper">
   <div class="header">
@@ -689,6 +754,37 @@
 
   setDate();
   render();
+
+  // Background Rupees Effect
+  function createRupee() {
+    const el = document.createElement('div');
+    el.className = 'rupee-float';
+    el.textContent = '₹';
+    el.style.left = Math.random() * 100 + 'vw';
+    el.style.fontSize = (Math.random() * 24 + 16) + 'px'; // 16px to 40px
+    const duration = Math.random() * 6 + 6; // 6s to 12s
+    el.style.animationDuration = duration + 's';
+    el.style.opacity = Math.random() * 0.4 + 0.1; // random subtle opacities
+    document.getElementById('rupees-container').appendChild(el);
+    setTimeout(() => el.remove(), duration * 1000);
+  }
+  setInterval(createRupee, 800); // spawn every 800ms
+
+  // Cursor glow effect
+  const glow = document.getElementById('cursorGlow');
+  document.addEventListener('mousemove', (e) => {
+    // Only update if it's not a touch device to skip weird mobile tap behaviors
+    glow.style.left = e.clientX + 'px';
+    glow.style.top = e.clientY + 'px';
+  });
+
+  // Change glow color on click
+  document.addEventListener('mousedown', () => {
+    glow.style.background = 'radial-gradient(circle, rgba(0, 186, 242, 0.08) 0%, transparent 60%)';
+  });
+  document.addEventListener('mouseup', () => {
+    glow.style.background = 'radial-gradient(circle, rgba(74, 222, 128, 0.05) 0%, transparent 60%)';
+  });
 </script>
 </body>
 </html>

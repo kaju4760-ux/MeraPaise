@@ -1,7 +1,7 @@
 {
   "name": "Mera Paisa",
   "short_name": "Mera Paisa",
-  "start_url": "./",
+  "start_url": "/MeraPaise/",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#000000",

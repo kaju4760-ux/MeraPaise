@@ -5,10 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Mera Paisa — Personal Money Manager</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#000000">
-<link rel="icon" href="icon.png">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
   :root {
     --bg: #0d0f14;
@@ -44,7 +43,6 @@
     overflow-x: hidden;
   }
 
-  /* Background texture */
   body::before {
     content: '';
     position: fixed;
@@ -57,7 +55,6 @@
 
   .wrapper { position: relative; z-index: 1; max-width: 480px; margin: 0 auto; padding: 0 16px 80px; }
 
-  /* ── Header ── */
   .header {
     padding: 28px 0 20px;
     display: flex;
@@ -89,7 +86,6 @@
     white-space: nowrap;
   }
 
-  /* ── Net Balance Hero ── */
   .hero-card {
     background: linear-gradient(135deg, #1a2535 0%, #1e2a20 100%);
     border: 0.5px solid var(--green-border);
@@ -117,7 +113,6 @@
   .hero-amount.zero { color: var(--text2); }
   .hero-sub { font-size: 12px; color: var(--text2); margin-top: 8px; }
 
-  /* ── Stats Row ── */
   .stats-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
   .stat-card {
     background: var(--surface);
@@ -133,7 +128,6 @@
   .stat-card.green-card .stat-value { color: var(--green); }
   .stat-card.red-card .stat-value { color: var(--red); }
 
-  /* ── Paytm Card ── */
   .paytm-card {
     background: var(--paytm-dim);
     border: 0.5px solid var(--paytm-border);
@@ -165,16 +159,14 @@
     padding: 4px 10px;
   }
 
-  /* ── Tabs ── */
   .tabs { display: flex; gap: 8px; margin-bottom: 16px; }
   .tab {
     flex: 1; padding: 10px; background: var(--surface); border: 0.5px solid var(--border);
-    border-radius: var(--radius-sm); font-size: 13px; font-weight: 500; color: var(--text2);
+    border-radius: var(--radius-sm); font-size: 12.5px; font-weight: 500; color: var(--text2);
     cursor: pointer; text-align: center; transition: all 0.2s;
   }
   .tab.active { background: var(--surface2); border-color: var(--border2); color: var(--text); }
 
-  /* ── Form ── */
   .form-section { display: none; }
   .form-section.active { display: block; }
   .form-card {
@@ -206,6 +198,14 @@
   .amount-wrap { position: relative; }
   .amount-wrap span { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text2); font-size: 15px; }
   .amount-wrap input { padding-left: 28px; }
+  .frow input[type="date"] { color-scheme: dark; }
+  .lock-warning {
+    display: none;
+    background: var(--red-dim); border: 0.5px solid var(--red-border);
+    border-radius: var(--radius-sm); padding: 10px 12px; font-size: 12px; color: var(--red);
+    margin-bottom: 14px;
+  }
+  .lock-warning.show { display: block; }
 
   .btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 18px; }
   .btn {
@@ -220,14 +220,29 @@
     letter-spacing: 0.2px;
   }
   .btn:active { transform: scale(0.97); opacity: 0.85; }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
   .btn-in { background: var(--green); color: #0a1a10; }
   .btn-in:hover { box-shadow: 0 0 20px rgba(74,222,128,0.5); }
   .btn-out { background: var(--red); color: #1a0a0a; }
   .btn-out:hover { box-shadow: 0 0 20px rgba(248,113,113,0.5); }
 
-  /* ── Entries ── */
   .entries-section { display: none; }
   .entries-section.active { display: block; }
+
+  .scope-row { margin-bottom: 12px; }
+  .scope-row select {
+    width: 100%;
+    background: var(--surface2);
+    border: 0.5px solid var(--border2);
+    border-radius: var(--radius-sm);
+    padding: 10px 14px;
+    font-size: 13px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    outline: none;
+    -webkit-appearance: none;
+  }
+  .scope-row select option { background: #1e2333; color: #f0f0f0; }
 
   .filter-row { display: flex; gap: 8px; margin-bottom: 14px; overflow-x: auto; padding-bottom: 4px; }
   .filter-row::-webkit-scrollbar { display: none; }
@@ -252,6 +267,19 @@
   .clear-btn:hover {
     box-shadow: 0 0 12px rgba(248,113,113,0.4);
     background: rgba(248,113,113,0.2);
+  }
+
+  .day-group { margin-bottom: 18px; }
+  .day-group-header {
+    display: flex; align-items: baseline; justify-content: space-between;
+    padding: 0 2px 8px; border-bottom: 0.5px solid var(--border);
+    margin-bottom: 10px;
+  }
+  .day-group-title { font-size: 13px; font-weight: 600; color: var(--text); display: flex; align-items: center; gap: 6px; }
+  .day-group-sub { font-size: 11px; color: var(--text2); }
+  .day-lock-tag {
+    font-size: 9.5px; color: var(--gold); background: var(--gold-dim);
+    border: 0.5px solid rgba(251,191,36,0.3); border-radius: 10px; padding: 1px 6px;
   }
 
   .entry-item {
@@ -292,7 +320,6 @@
   .empty-state .icon { font-size: 40px; margin-bottom: 12px; opacity: 0.3; }
   .empty-state p { font-size: 13px; color: var(--text3); }
 
-  /* ── Chart Section ── */
   .chart-section { display: none; }
   .chart-section.active { display: block; }
   .chart-card {
@@ -321,20 +348,43 @@
   .cat-bar { flex: 2; height: 4px; background: var(--surface2); border-radius: 2px; overflow: hidden; position: relative; }
   .cat-bar-fill { height: 100%; border-radius: 2px; position: relative; overflow: hidden; transition: width 0.6s cubic-bezier(.4,0,.2,1); }
 
-  /* ── Shimmer Effect for Bars ── */
-  @keyframes shimmer {
-    0% { transform: translateX(-150%); }
-    50%, 100% { transform: translateX(250%); }
+  .reports-section { display: none; }
+  .reports-section.active { display: block; }
+  .report-note {
+    font-size: 11.5px; color: var(--text2); background: var(--surface);
+    border: 0.5px solid var(--border); border-radius: var(--radius-sm);
+    padding: 10px 12px; margin-bottom: 14px; line-height: 1.5;
   }
-  .bar-fill::after, .cat-bar-fill::after {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; bottom: 0; width: 60%;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
-    animation: shimmer 2.5s infinite;
+  .report-card {
+    background: var(--surface);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-bottom: 10px;
   }
+  .report-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+  .report-date { font-size: 14px; font-weight: 600; color: var(--text); }
+  .report-count { font-size: 11px; color: var(--text2); margin-top: 2px; }
+  .report-nums { display: flex; gap: 14px; margin-bottom: 12px; }
+  .report-num-block .lbl { font-size: 10px; color: var(--text2); text-transform: uppercase; }
+  .report-num-block .val { font-size: 15px; font-weight: 600; }
+  .report-num-block.in .val { color: var(--green); }
+  .report-num-block.out .val { color: var(--red); }
+  .report-num-block.net .val { color: var(--text); }
+  .lock-badge {
+    font-size: 10px; padding: 3px 9px; border-radius: 20px; display: inline-flex; align-items: center; gap: 4px;
+  }
+  .lock-badge.locked { background: var(--gold-dim); color: var(--gold); border: 0.5px solid rgba(251,191,36,0.3); }
+  .lock-badge.open { background: var(--green-dim); color: var(--green); border: 0.5px solid var(--green-border); }
+  .btn-pdf {
+    width: 100%; padding: 11px; border-radius: var(--radius-sm); border: none;
+    font-size: 13px; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif;
+    background: var(--surface2); color: var(--text); border: 0.5px solid var(--border2);
+    transition: all 0.2s;
+  }
+  .btn-pdf.primary { background: var(--gold-dim); color: var(--gold); border-color: rgba(251,191,36,0.3); }
+  .btn-pdf:active { transform: scale(0.98); }
 
-  /* ── Bottom Nav ── */
   .bottom-nav {
     position: fixed; bottom: 0; left: 0; right: 0;
     background: rgba(13,15,20,0.95);
@@ -353,7 +403,6 @@
   .nav-btn .nav-icon { font-size: 20px; line-height: 1; }
   .nav-btn.active { color: var(--green); }
 
-  /* ── Toast ── */
   .toast {
     position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%) translateY(20px);
     background: var(--surface2); border: 0.5px solid var(--border2);
@@ -363,7 +412,6 @@
   }
   .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
-  /* ── Interactive Glow ── */
   #cursorGlow {
     position: fixed;
     top: -1000px;
@@ -378,7 +426,6 @@
     transition: background 0.3s ease;
   }
 
-  /* ── Floating Rupees ── */
   #rupees-container {
     position: fixed; top: 0; left: 0; width: 100%; height: 100%;
     pointer-events: none; z-index: 0; overflow: hidden;
@@ -395,15 +442,19 @@
     90% { opacity: 1; }
     100% { transform: translateY(110vh) rotate(360deg); opacity: 0; }
   }
+
+  .loading-overlay {
+    position: fixed; inset: 0; background: var(--bg);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 999; color: var(--text2); font-size: 13px;
+  }
 </style>
 </head>
 <body>
 
-<!-- Responsive cursor tracking glow -->
 <div id="cursorGlow"></div>
-
-<!-- Background Rupees Container -->
 <div id="rupees-container"></div>
+<div class="loading-overlay" id="loadingOverlay">Load ho raha hai...</div>
 
 <div class="wrapper">
   <div class="header">
@@ -414,14 +465,12 @@
     <div class="date-chip" id="dateChip"></div>
   </div>
 
-  <!-- Hero Balance -->
   <div class="hero-card">
-    <div class="hero-label">Aaj Ka Net Balance</div>
+    <div class="hero-label">Total Net Balance</div>
     <div class="hero-amount zero" id="heroAmount">₹0</div>
     <div class="hero-sub" id="heroSub">Koi entry nahi abhi</div>
   </div>
 
-  <!-- Stats -->
   <div class="stats-row">
     <div class="stat-card green-card">
       <div class="stat-icon">↑</div>
@@ -435,7 +484,6 @@
     </div>
   </div>
 
-  <!-- Paytm -->
   <div class="paytm-card">
     <div class="paytm-left">
       <div class="paytm-icon">P</div>
@@ -447,17 +495,21 @@
     <div class="paytm-badge">Paytm Cash</div>
   </div>
 
-  <!-- Tabs -->
   <div class="tabs">
     <div class="tab active" onclick="switchTab('entry')">+ Entry</div>
     <div class="tab" onclick="switchTab('entries')">Entries</div>
     <div class="tab" onclick="switchTab('chart')">Chart</div>
+    <div class="tab" onclick="switchTab('reports')">Reports</div>
   </div>
 
-  <!-- Entry Form -->
   <div class="form-section active" id="tab-entry">
     <div class="form-card">
       <h3>Nayi Entry Daalo</h3>
+      <div class="lock-warning" id="lockWarning">🔒 Ye tareekh PDF mai lock ho chuki hai — is din ki entry ab add nahi ho sakti.</div>
+      <div class="frow">
+        <label>Tareekh (Date)</label>
+        <input type="date" id="entryDate" onchange="checkDateLock()" />
+      </div>
       <div class="frow">
         <label>Vivran (Description)</label>
         <input type="text" id="desc" placeholder="Kya kharida ya kahan se aaya?" />
@@ -499,14 +551,18 @@
         <input type="text" id="note" placeholder="Koi khaas baat..." />
       </div>
       <div class="btn-row">
-        <button class="btn btn-in" onclick="addEntry('income')">↑ Aaya (Income)</button>
-        <button class="btn btn-out" onclick="addEntry('expense')">↓ Gaya (Expense)</button>
+        <button class="btn btn-in" id="btnIn" onclick="addEntry('income')">↑ Aaya (Income)</button>
+        <button class="btn btn-out" id="btnOut" onclick="addEntry('expense')">↓ Gaya (Expense)</button>
       </div>
     </div>
   </div>
 
-  <!-- Entries List -->
   <div class="entries-section" id="tab-entries">
+    <div class="scope-row">
+      <select id="dateScopeSelect" onchange="onDateScopeChange()">
+        <option value="all">📅 Sab Dates</option>
+      </select>
+    </div>
     <div class="filter-row" id="filterRow">
       <div class="filter-chip active" onclick="setFilter('all', this)">Sab</div>
       <div class="filter-chip" onclick="setFilter('income', this)">Aaya</div>
@@ -522,10 +578,14 @@
     <div id="entriesList"></div>
   </div>
 
-  <!-- Chart -->
   <div class="chart-section" id="tab-chart">
+    <div class="scope-row">
+      <select id="chartScopeSelect" onchange="renderChart()">
+        <option value="all">📊 Sab Dates (Total)</option>
+      </select>
+    </div>
     <div class="chart-card">
-      <h3>Aaj Ka Hisaab</h3>
+      <h3 id="chartHeading">Hisaab</h3>
       <div class="bar-group">
         <div class="bar-top">
           <span>Income</span>
@@ -554,9 +614,13 @@
       <div class="cat-grid" id="catGrid"><p style="color:var(--text3);font-size:13px;text-align:center;padding:20px 0">Koi entries nahi</p></div>
     </div>
   </div>
+
+  <div class="reports-section" id="tab-reports">
+    <div class="report-note">💡 Har din ka PDF bana kar download karo. Ek baar PDF ban jaaye to us din ki entries lock ho jaati hain — fir naya entry ya edit us tareekh ke liye nahi ho sakta.</div>
+    <div id="reportsList"></div>
+  </div>
 </div>
 
-<!-- Bottom Nav -->
 <div class="bottom-nav">
   <button class="nav-btn active" id="nav-entry" onclick="switchTab('entry')">
     <span class="nav-icon">✏️</span>Entry
@@ -567,15 +631,20 @@
   <button class="nav-btn" id="nav-chart" onclick="switchTab('chart')">
     <span class="nav-icon">📊</span>Chart
   </button>
+  <button class="nav-btn" id="nav-reports" onclick="switchTab('reports')">
+    <span class="nav-icon">📄</span>Reports
+  </button>
 </div>
 
-<!-- Toast -->
 <div class="toast" id="toast"></div>
 
 <script>
-  let entries = JSON.parse(localStorage.getItem('mp_entries_v2') || '[]');
+  let entries = [];
+  let lockedDates = [];
   let activeFilter = 'all';
   let activeTab = 'entry';
+  let dateScope = 'all';
+  let chartScope = 'all';
 
   const catColors = {
     Khaana:'#4ade80', Transport:'#60a5fa', Bill:'#fbbf24', Shopping:'#f472b6',
@@ -585,26 +654,93 @@
     Khaana:'🍛', Transport:'🚗', Bill:'💡', Shopping:'🛍️',
     Salary:'💰', Business:'📊', Medical:'🏥', Entertainment:'🎬', Other:'📌'
   };
+  const dayNames = ['Ravivar','Somvar','Mangalvar','Budhvar','Guruvar','Shukravar','Shanivar'];
+  const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
   function fmt(n) { return '₹' + Math.round(n).toLocaleString('en-IN'); }
 
-  function save() { localStorage.setItem('mp_entries_v2', JSON.stringify(entries)); }
+  function todayISO() {
+    const d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+  }
+
+  function parseIndianDateToISO(str) {
+    if (!str) return null;
+    const parts = str.split('/');
+    if (parts.length !== 3) return null;
+    const [d, m, y] = parts;
+    if (!d || !m || !y) return null;
+    return y.padStart(4,'0') + '-' + m.padStart(2,'0') + '-' + d.padStart(2,'0');
+  }
+
+  function formatDateLabel(iso) {
+    if (!iso) return 'Purani Entry';
+    const parts = iso.split('-');
+    if (parts.length !== 3) return iso;
+    const d = new Date(+parts[0], +parts[1]-1, +parts[2]);
+    if (isNaN(d.getTime())) return iso;
+    const label = dayNames[d.getDay()] + ', ' + d.getDate() + ' ' + monthNames[d.getMonth()] + ' ' + d.getFullYear();
+    if (iso === todayISO()) return 'Aaj — ' + label;
+    return label;
+  }
+
+  function migrateEntries() {
+    let changed = false;
+    entries.forEach(e => {
+      if (!e.dateISO) {
+        e.dateISO = parseIndianDateToISO(e.date) || null;
+        changed = true;
+      }
+    });
+    if (changed) save();
+  }
+
+  // ── Persistent storage (artifact-safe, replaces localStorage) ──
+  async function save() {
+    try {
+      await window.storage.set('mp_entries_v2', JSON.stringify(entries));
+    } catch (err) {
+      console.error('Entries save failed:', err);
+      showToast('⚠️ Save nahi ho paya, dobara try karo');
+    }
+  }
+  async function saveLocked() {
+    try {
+      await window.storage.set('mp_locked_dates', JSON.stringify(lockedDates));
+    } catch (err) {
+      console.error('Locked dates save failed:', err);
+    }
+  }
+
+  function isLocked(iso) { return !!iso && lockedDates.includes(iso); }
 
   function showToast(msg) {
     const t = document.getElementById('toast');
     t.textContent = msg;
     t.classList.add('show');
-    setTimeout(() => t.classList.remove('show'), 2200);
+    setTimeout(() => t.classList.remove('show'), 2400);
   }
 
   function setDate() {
     const d = new Date();
-    const days = ['Ravivar','Somvar','Mangalvar','Budhvar','Guruvar','Shukravar','Shanivar'];
-    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-    document.getElementById('dateChip').textContent = days[d.getDay()] + ', ' + d.getDate() + ' ' + months[d.getMonth()];
+    document.getElementById('dateChip').textContent = dayNames[d.getDay()] + ', ' + d.getDate() + ' ' + monthNames[d.getMonth()];
+    const dateInput = document.getElementById('entryDate');
+    dateInput.value = todayISO();
+    dateInput.max = todayISO();
+    checkDateLock();
   }
 
-  function addEntry(type) {
+  function checkDateLock() {
+    const iso = document.getElementById('entryDate').value;
+    const locked = isLocked(iso);
+    document.getElementById('lockWarning').classList.toggle('show', locked);
+    document.getElementById('btnIn').disabled = locked;
+    document.getElementById('btnOut').disabled = locked;
+  }
+
+  async function addEntry(type) {
+    const dateISO = document.getElementById('entryDate').value || todayISO();
+    if (isLocked(dateISO)) { showToast('🔒 Ye tareekh lock hai, entry nahi ho sakti!'); return; }
     const desc = document.getElementById('desc').value.trim();
     const amount = parseFloat(document.getElementById('amount').value);
     const method = document.getElementById('method').value;
@@ -616,22 +752,36 @@
     const entry = {
       id: Date.now(), type, desc, amount, method, category, note,
       time: now.toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit'}),
-      date: now.toLocaleDateString('en-IN')
+      dateISO,
+      date: dateISO.split('-').reverse().join('/')
     };
     entries.unshift(entry);
-    save();
+
+    // Update UI immediately (don't block on storage)
     document.getElementById('desc').value = '';
     document.getElementById('amount').value = '';
     document.getElementById('note').value = '';
+    populateDateScopes();
     render();
     showToast(type === 'income' ? '✅ Income add ho gayi!' : '✅ Expense add ho gayi!');
+
+    await save();
   }
 
-  function clearAll() {
+  async function clearAll() {
     if (!entries.length) { showToast('Koi entry nahi hai!'); return; }
-    if (confirm('Pakka sab delete karna hai?')) {
-      entries = []; save(); render();
-      showToast('🗑️ Sab saaf ho gaya!');
+    const unlockedCount = entries.filter(e => !isLocked(e.dateISO)).length;
+    if (!unlockedCount) { showToast('🔒 Saari dates PDF mai lock hain, kuch clear nahi hoga!'); return; }
+    const lockedCount = entries.length - unlockedCount;
+    const msg = lockedCount
+      ? `Pakka ${unlockedCount} unlocked entries delete karni hain? (${lockedCount} locked entries safe rahengi)`
+      : 'Pakka sab delete karna hai?';
+    if (confirm(msg)) {
+      entries = entries.filter(e => isLocked(e.dateISO));
+      populateDateScopes();
+      render();
+      showToast('🗑️ Unlocked entries saaf ho gayi!');
+      await save();
     }
   }
 
@@ -642,9 +792,14 @@
     renderList();
   }
 
+  function onDateScopeChange() {
+    dateScope = document.getElementById('dateScopeSelect').value;
+    renderList();
+  }
+
   function switchTab(tab) {
     activeTab = tab;
-    document.querySelectorAll('.form-section, .entries-section, .chart-section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.form-section, .entries-section, .chart-section, .reports-section').forEach(s => s.classList.remove('active'));
     document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
     document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
 
@@ -652,25 +807,52 @@
       document.getElementById('tab-entry').classList.add('active');
       document.querySelectorAll('.tab')[0].classList.add('active');
       document.getElementById('nav-entry').classList.add('active');
+      checkDateLock();
     } else if (tab === 'entries') {
       document.getElementById('tab-entries').classList.add('active');
       document.querySelectorAll('.tab')[1].classList.add('active');
       document.getElementById('nav-entries').classList.add('active');
       renderList();
-    } else {
+    } else if (tab === 'chart') {
       document.getElementById('tab-chart').classList.add('active');
       document.querySelectorAll('.tab')[2].classList.add('active');
       document.getElementById('nav-chart').classList.add('active');
       renderChart();
+    } else {
+      document.getElementById('tab-reports').classList.add('active');
+      document.querySelectorAll('.tab')[3].classList.add('active');
+      document.getElementById('nav-reports').classList.add('active');
+      renderReports();
     }
+  }
+
+  function getAllDates() {
+    const set = new Set(entries.map(e => e.dateISO).filter(Boolean));
+    return Array.from(set).sort().reverse();
+  }
+
+  function populateDateScopes() {
+    const dates = getAllDates();
+    const sel1 = document.getElementById('dateScopeSelect');
+    const sel2 = document.getElementById('chartScopeSelect');
+    const prev1 = sel1.value, prev2 = sel2.value;
+    sel1.innerHTML = '<option value="all">📅 Sab Dates</option>' +
+      dates.map(d => `<option value="${d}">${formatDateLabel(d)}${isLocked(d) ? ' 🔒' : ''}</option>`).join('');
+    sel2.innerHTML = '<option value="all">📊 Sab Dates (Total)</option>' +
+      dates.map(d => `<option value="${d}">${formatDateLabel(d)}${isLocked(d) ? ' 🔒' : ''}</option>`).join('');
+    if (dates.includes(prev1) || prev1 === 'all') sel1.value = prev1; else sel1.value = 'all';
+    if (dates.includes(prev2) || prev2 === 'all') sel2.value = prev2; else sel2.value = 'all';
+    dateScope = sel1.value;
+    chartScope = sel2.value;
   }
 
   function renderList() {
     let filtered = entries;
-    if (activeFilter === 'income') filtered = entries.filter(e => e.type === 'income');
-    else if (activeFilter === 'expense') filtered = entries.filter(e => e.type === 'expense');
-    else if (activeFilter === 'Paytm') filtered = entries.filter(e => e.method === 'Paytm');
-    else if (activeFilter !== 'all') filtered = entries.filter(e => e.category === activeFilter);
+    if (dateScope !== 'all') filtered = filtered.filter(e => e.dateISO === dateScope);
+    if (activeFilter === 'income') filtered = filtered.filter(e => e.type === 'income');
+    else if (activeFilter === 'expense') filtered = filtered.filter(e => e.type === 'expense');
+    else if (activeFilter === 'Paytm') filtered = filtered.filter(e => e.method === 'Paytm');
+    else if (activeFilter !== 'all') filtered = filtered.filter(e => e.category === activeFilter);
 
     const list = document.getElementById('entriesList');
     document.getElementById('entryCountLabel').textContent = filtered.length + ' entr' + (filtered.length === 1 ? 'y' : 'ies');
@@ -679,27 +861,54 @@
       list.innerHTML = '<div class="empty-state"><div class="icon">📭</div><p>Is filter mein koi entry nahi</p></div>';
       return;
     }
-    list.innerHTML = filtered.map(e => `
-      <div class="entry-item">
-        <div class="entry-dot ${e.type === 'income' ? 'dot-in' : 'dot-out'}">${catEmoji[e.category] || '📌'}</div>
-        <div class="entry-body">
-          <div class="entry-desc">${e.desc}</div>
-          <div class="entry-meta">
-            <span>${e.time}</span>
-            <span class="entry-tag">${e.category}</span>
-            <span class="entry-tag${e.method === 'Paytm' ? ' paytm-tag' : ''}">${e.method}</span>
-            ${e.note ? '<span class="entry-tag">' + e.note + '</span>' : ''}
+
+    const groups = {};
+    filtered.forEach(e => {
+      const key = e.dateISO || 'unknown';
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(e);
+    });
+    const orderedKeys = Object.keys(groups).sort().reverse();
+
+    list.innerHTML = orderedKeys.map(key => {
+      const items = groups[key];
+      let inc = 0, exp = 0;
+      items.forEach(e => e.type === 'income' ? inc += e.amount : exp += e.amount);
+      const locked = isLocked(key);
+      return `
+        <div class="day-group">
+          <div class="day-group-header">
+            <div class="day-group-title">${formatDateLabel(key)} ${locked ? '<span class="day-lock-tag">🔒 Locked</span>' : ''}</div>
+            <div class="day-group-sub">+${fmt(inc)} / -${fmt(exp)}</div>
           </div>
+          ${items.map(e => `
+            <div class="entry-item">
+              <div class="entry-dot ${e.type === 'income' ? 'dot-in' : 'dot-out'}">${catEmoji[e.category] || '📌'}</div>
+              <div class="entry-body">
+                <div class="entry-desc">${e.desc}</div>
+                <div class="entry-meta">
+                  <span>${e.time}</span>
+                  <span class="entry-tag">${e.category}</span>
+                  <span class="entry-tag${e.method === 'Paytm' ? ' paytm-tag' : ''}">${e.method}</span>
+                  ${e.note ? '<span class="entry-tag">' + e.note + '</span>' : ''}
+                </div>
+              </div>
+              <div class="entry-amount ${e.type === 'income' ? 'amt-in' : 'amt-out'}">${e.type === 'income' ? '+' : '-'}${fmt(e.amount)}</div>
+            </div>
+          `).join('')}
         </div>
-        <div class="entry-amount ${e.type === 'income' ? 'amt-in' : 'amt-out'}">${e.type === 'income' ? '+' : '-'}${fmt(e.amount)}</div>
-      </div>
-    `).join('');
+      `;
+    }).join('');
   }
 
   function renderChart() {
+    chartScope = document.getElementById('chartScopeSelect').value;
+    const scoped = chartScope === 'all' ? entries : entries.filter(e => e.dateISO === chartScope);
+    document.getElementById('chartHeading').textContent = chartScope === 'all' ? 'Sab Dates Ka Hisaab' : formatDateLabel(chartScope) + ' Ka Hisaab';
+
     let income = 0, expense = 0, paytm = 0;
     const catMap = {};
-    entries.forEach(e => {
+    scoped.forEach(e => {
       if (e.type === 'income') income += e.amount;
       else { expense += e.amount; catMap[e.category] = (catMap[e.category] || 0) + e.amount; }
       if (e.method === 'Paytm') paytm += e.amount;
@@ -726,6 +935,109 @@
     `).join('');
   }
 
+  function renderReports() {
+    const dates = getAllDates();
+    const list = document.getElementById('reportsList');
+    if (!dates.length) {
+      list.innerHTML = '<div class="empty-state"><div class="icon">📄</div><p>Abhi koi entry nahi, PDF banane ke liye pehle entry daalo</p></div>';
+      return;
+    }
+    list.innerHTML = dates.map(iso => {
+      const items = entries.filter(e => e.dateISO === iso);
+      let inc = 0, exp = 0;
+      items.forEach(e => e.type === 'income' ? inc += e.amount : exp += e.amount);
+      const locked = isLocked(iso);
+      return `
+        <div class="report-card">
+          <div class="report-top">
+            <div>
+              <div class="report-date">${formatDateLabel(iso)}</div>
+              <div class="report-count">${items.length} entr${items.length === 1 ? 'y' : 'ies'}</div>
+            </div>
+            <span class="lock-badge ${locked ? 'locked' : 'open'}">${locked ? '🔒 Locked' : '🔓 Open'}</span>
+          </div>
+          <div class="report-nums">
+            <div class="report-num-block in"><div class="lbl">Aaya</div><div class="val">${fmt(inc)}</div></div>
+            <div class="report-num-block out"><div class="lbl">Gaya</div><div class="val">${fmt(exp)}</div></div>
+            <div class="report-num-block net"><div class="lbl">Net</div><div class="val">${fmt(inc-exp)}</div></div>
+          </div>
+          <button class="btn-pdf ${locked ? '' : 'primary'}" onclick="generatePDF('${iso}')">${locked ? '⬇️ PDF Dobara Download' : '📄 PDF Banao & Lock Karo'}</button>
+        </div>
+      `;
+    }).join('');
+  }
+
+  async function generatePDF(iso) {
+    const items = entries.filter(e => e.dateISO === iso).slice().reverse();
+    if (!items.length) { showToast('Is date ki koi entry nahi mili'); return; }
+    if (typeof window.jspdf === 'undefined') { showToast('⚠️ PDF library load nahi hui, internet check karo'); return; }
+
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    let y = 18;
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(16);
+    doc.text('Mera Paisa - Daily Report', 14, y);
+    y += 8;
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'normal');
+    doc.text(formatDateLabel(iso).replace(/[^\x00-\x7F]/g, ''), 14, y);
+    y += 10;
+
+    doc.setDrawColor(200);
+    doc.line(14, y, 196, y);
+    y += 8;
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(10);
+    doc.text('Time', 14, y);
+    doc.text('Description', 34, y);
+    doc.text('Category', 104, y);
+    doc.text('Method', 140, y);
+    doc.text('Amount', 196, y, { align: 'right' });
+    y += 5;
+    doc.line(14, y, 196, y);
+    y += 6;
+
+    doc.setFont('helvetica', 'normal');
+    let inc = 0, exp = 0;
+    items.forEach(e => {
+      if (y > 275) { doc.addPage(); y = 18; }
+      if (e.type === 'income') inc += e.amount; else exp += e.amount;
+      doc.text(String(e.time || ''), 14, y);
+      doc.text(String(e.desc || '').slice(0, 32), 34, y);
+      doc.text(String(e.category || ''), 104, y);
+      doc.text(String(e.method || ''), 140, y);
+      doc.text((e.type === 'income' ? '+' : '-') + fmt(e.amount).replace('₹',''), 196, y, { align: 'right' });
+      y += 7;
+    });
+
+    y += 4;
+    doc.line(14, y, 196, y);
+    y += 8;
+    doc.setFont('helvetica', 'bold');
+    doc.text('Total Aaya: Rs ' + Math.round(inc).toLocaleString('en-IN'), 14, y);
+    y += 7;
+    doc.text('Total Gaya: Rs ' + Math.round(exp).toLocaleString('en-IN'), 14, y);
+    y += 7;
+    doc.text('Net Balance: Rs ' + Math.round(inc - exp).toLocaleString('en-IN'), 14, y);
+
+    doc.save('MeraPaisa_' + iso + '.pdf');
+
+    if (!isLocked(iso)) {
+      lockedDates.push(iso);
+      await saveLocked();
+      populateDateScopes();
+      checkDateLock();
+      showToast('✅ PDF ban gaya! Ye din ab lock ho gaya hai.');
+    } else {
+      showToast('✅ PDF dobara download ho gaya.');
+    }
+    renderReports();
+    if (activeTab === 'entries') renderList();
+  }
+
   function render() {
     let income = 0, expense = 0, paytm = 0;
     entries.forEach(e => {
@@ -735,14 +1047,13 @@
     });
     const net = income - expense;
     const heroEl = document.getElementById('heroAmount');
-    heroEl.textContent = (net >= 0 ? '+' : '') + fmt(Math.abs(net));
-    heroEl.className = 'hero-amount ' + (net > 0 ? 'positive' : net < 0 ? 'negative' : 'zero');
     if (net > 0) heroEl.textContent = '+' + fmt(net);
     else if (net < 0) heroEl.textContent = '-' + fmt(Math.abs(net));
     else heroEl.textContent = '₹0';
+    heroEl.className = 'hero-amount ' + (net > 0 ? 'positive' : net < 0 ? 'negative' : 'zero');
 
     document.getElementById('heroSub').textContent = entries.length
-      ? `${entries.length} entr${entries.length === 1 ? 'y' : 'ies'} aaj tak`
+      ? `${entries.length} entr${entries.length === 1 ? 'y' : 'ies'} • ${getAllDates().length} din`
       : 'Koi entry nahi abhi';
     document.getElementById('totalIncome').textContent = fmt(income);
     document.getElementById('totalExpense').textContent = fmt(expense);
@@ -750,35 +1061,51 @@
 
     if (activeTab === 'entries') renderList();
     if (activeTab === 'chart') renderChart();
+    if (activeTab === 'reports') renderReports();
   }
 
-  setDate();
-  render();
+  // ── Init: load saved data first, then boot the UI ──
+  async function init() {
+    try {
+      const e = await window.storage.get('mp_entries_v2');
+      entries = e && e.value ? JSON.parse(e.value) : [];
+    } catch (err) {
+      entries = [];
+    }
+    try {
+      const l = await window.storage.get('mp_locked_dates');
+      lockedDates = l && l.value ? JSON.parse(l.value) : [];
+    } catch (err) {
+      lockedDates = [];
+    }
+    migrateEntries();
+    setDate();
+    populateDateScopes();
+    render();
+    document.getElementById('loadingOverlay').style.display = 'none';
+  }
+  init();
 
-  // Background Rupees Effect
   function createRupee() {
     const el = document.createElement('div');
     el.className = 'rupee-float';
     el.textContent = '₹';
     el.style.left = Math.random() * 100 + 'vw';
-    el.style.fontSize = (Math.random() * 24 + 16) + 'px'; // 16px to 40px
-    const duration = Math.random() * 6 + 6; // 6s to 12s
+    el.style.fontSize = (Math.random() * 24 + 16) + 'px';
+    const duration = Math.random() * 6 + 6;
     el.style.animationDuration = duration + 's';
-    el.style.opacity = Math.random() * 0.4 + 0.1; // random subtle opacities
+    el.style.opacity = Math.random() * 0.4 + 0.1;
     document.getElementById('rupees-container').appendChild(el);
     setTimeout(() => el.remove(), duration * 1000);
   }
-  setInterval(createRupee, 800); // spawn every 800ms
+  setInterval(createRupee, 800);
 
-  // Cursor glow effect
   const glow = document.getElementById('cursorGlow');
   document.addEventListener('mousemove', (e) => {
-    // Only update if it's not a touch device to skip weird mobile tap behaviors
     glow.style.left = e.clientX + 'px';
     glow.style.top = e.clientY + 'px';
   });
 
-  // Change glow color on click
   document.addEventListener('mousedown', () => {
     glow.style.background = 'radial-gradient(circle, rgba(0, 186, 242, 0.08) 0%, transparent 60%)';
   });

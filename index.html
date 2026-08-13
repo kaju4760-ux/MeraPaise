@@ -448,6 +448,69 @@
     display: flex; align-items: center; justify-content: center;
     z-index: 999; color: var(--text2); font-size: 13px;
   }
+
+  /* ── Backup & Restore additions ── */
+  .backup-reminder {
+    display: none;
+    background: var(--gold-dim); border: 0.5px solid rgba(251,191,36,0.3);
+    border-radius: var(--radius-sm); padding: 10px 12px; margin-bottom: 14px;
+    font-size: 12px; color: var(--gold); display: none;
+    align-items: center; justify-content: space-between; gap: 10px;
+  }
+  .backup-reminder.show { display: flex; }
+  .backup-reminder button {
+    background: rgba(251,191,36,0.18); border: 0.5px solid rgba(251,191,36,0.35);
+    color: var(--gold); border-radius: 20px; padding: 5px 10px; font-size: 11px;
+    font-family: 'DM Sans', sans-serif; cursor: pointer; white-space: nowrap;
+  }
+  .backup-card { margin-bottom: 16px; }
+  .backup-status-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+  .backup-status-item {
+    background: var(--surface2); border: 0.5px solid var(--border);
+    border-radius: var(--radius-sm); padding: 12px;
+  }
+  .backup-status-item .lbl { font-size: 10px; color: var(--text2); text-transform: uppercase; margin-bottom: 4px; }
+  .backup-status-item .val { font-size: 14px; font-weight: 600; color: var(--text); }
+  .backup-btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .btn-export {
+    background: var(--green-dim); color: var(--green); border: 0.5px solid var(--green-border);
+    padding: 13px; border-radius: var(--radius-sm); font-size: 13px; font-weight: 600;
+    cursor: pointer; font-family: 'DM Sans', sans-serif; text-align: center;
+  }
+  .btn-import {
+    background: var(--paytm-dim); color: var(--paytm); border: 0.5px solid var(--paytm-border);
+    padding: 13px; border-radius: var(--radius-sm); font-size: 13px; font-weight: 600;
+    cursor: pointer; font-family: 'DM Sans', sans-serif; text-align: center;
+  }
+  #importFileInput { display: none; }
+
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.65);
+    display: none; align-items: center; justify-content: center;
+    z-index: 500; padding: 20px;
+  }
+  .modal-overlay.show { display: flex; }
+  .modal-box {
+    background: var(--surface); border: 0.5px solid var(--border2);
+    border-radius: var(--radius); padding: 22px; max-width: 420px; width: 100%;
+    max-height: 85vh; overflow-y: auto;
+  }
+  .modal-box h3 { font-size: 15px; font-weight: 600; margin-bottom: 12px; color: var(--text); }
+  .modal-box p { font-size: 13px; color: var(--text2); line-height: 1.6; margin-bottom: 10px; }
+  .modal-info-row {
+    display: flex; justify-content: space-between; font-size: 12.5px;
+    padding: 7px 0; border-bottom: 0.5px solid var(--border);
+  }
+  .modal-info-row span:first-child { color: var(--text2); }
+  .modal-info-row span:last-child { color: var(--text); font-weight: 500; }
+  .modal-btn-col { display: flex; flex-direction: column; gap: 10px; margin-top: 18px; }
+  .modal-btn {
+    padding: 13px; border-radius: var(--radius-sm); border: none; font-size: 14px;
+    font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif;
+  }
+  .modal-btn.merge { background: var(--paytm-dim); color: var(--paytm); border: 0.5px solid var(--paytm-border); }
+  .modal-btn.replace { background: var(--red-dim); color: var(--red); border: 0.5px solid var(--red-border); }
+  .modal-btn.cancel { background: var(--surface2); color: var(--text2); border: 0.5px solid var(--border2); }
 </style>
 </head>
 <body>
@@ -463,6 +526,11 @@
       <p>Personal Money Manager</p>
     </div>
     <div class="date-chip" id="dateChip"></div>
+  </div>
+
+  <div class="backup-reminder" id="backupReminder">
+    <span>⏰ Last backup 7 din se zyada purana hai. Ab backup banao.</span>
+    <button onclick="goToBackupTab()">Backup Karo</button>
   </div>
 
   <div class="hero-card">
@@ -616,6 +684,25 @@
   </div>
 
   <div class="reports-section" id="tab-reports">
+    <div class="backup-card report-card" id="backupCard">
+      <h3 style="font-size:14px;font-weight:600;margin-bottom:12px;color:var(--text)">💾 Backup &amp; Restore</h3>
+      <div class="backup-status-grid">
+        <div class="backup-status-item">
+          <div class="lbl">Last Backup</div>
+          <div class="val" id="lastBackupVal">Never</div>
+        </div>
+        <div class="backup-status-item">
+          <div class="lbl">Total Records</div>
+          <div class="val" id="totalRecordsVal">0</div>
+        </div>
+      </div>
+      <div class="backup-btn-row">
+        <button class="btn-export" onclick="exportBackup()">⬇️ Export Backup</button>
+        <button class="btn-import" onclick="document.getElementById('importFileInput').click()">⬆️ Import Backup</button>
+      </div>
+      <input type="file" id="importFileInput" accept="application/json,.json" onchange="handleImportFile(event)" />
+      <p style="font-size:11px;color:var(--text3);margin-top:12px;line-height:1.5">🔒 Backup file sirf tumhare device par save hota hai. Kahin upload nahi hota — 100% private.</p>
+    </div>
     <div class="report-note">💡 Har din ka PDF bana kar download karo. Ek baar PDF ban jaaye to us din ki entries lock ho jaati hain — fir naya entry ya edit us tareekh ke liye nahi ho sakta.</div>
     <div id="reportsList"></div>
   </div>
@@ -638,6 +725,19 @@
 
 <div class="toast" id="toast"></div>
 
+<!-- Import confirmation modal -->
+<div class="modal-overlay" id="importModal">
+  <div class="modal-box">
+    <h3>📦 Backup File Mili</h3>
+    <div id="importInfoBody"></div>
+    <div class="modal-btn-col">
+      <button class="modal-btn merge" onclick="confirmImport('merge')">🔀 Merge Karo (Purani + Nayi entries)</button>
+      <button class="modal-btn replace" onclick="confirmImport('replace')">♻️ Replace Karo (Sab kuch is backup se badlo)</button>
+      <button class="modal-btn cancel" onclick="closeImportModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
 <script>
   let entries = [];
   let lockedDates = [];
@@ -645,6 +745,8 @@
   let activeTab = 'entry';
   let dateScope = 'all';
   let chartScope = 'all';
+  let lastBackupTs = null;
+  let pendingImportData = null;
 
   const catColors = {
     Khaana:'#4ade80', Transport:'#60a5fa', Bill:'#fbbf24', Shopping:'#f472b6',
@@ -684,11 +786,21 @@
     return label;
   }
 
+  function genId() {
+    if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
+    return 'id_' + Date.now() + '_' + Math.random().toString(36).slice(2, 10);
+  }
+
   function migrateEntries() {
     let changed = false;
     entries.forEach(e => {
       if (!e.dateISO) {
         e.dateISO = parseIndianDateToISO(e.date) || null;
+        changed = true;
+      }
+      // FEATURE 8: ensure every entry has a stable unique ID without touching visible info
+      if (e.id === undefined || e.id === null) {
+        e.id = genId();
         changed = true;
       }
     });
@@ -711,6 +823,13 @@
       console.error('Locked dates save failed:', err);
     }
   }
+  async function saveLastBackupTs() {
+    try {
+      await window.storage.set('mp_last_backup_ts', String(lastBackupTs));
+    } catch (err) {
+      console.error('Backup timestamp save failed:', err);
+    }
+  }
 
   function isLocked(iso) { return !!iso && lockedDates.includes(iso); }
 
@@ -718,7 +837,7 @@
     const t = document.getElementById('toast');
     t.textContent = msg;
     t.classList.add('show');
-    setTimeout(() => t.classList.remove('show'), 2400);
+    setTimeout(() => t.classList.remove('show'), 2800);
   }
 
   function setDate() {
@@ -750,7 +869,7 @@
     if (!amount || amount <= 0) { showToast('⚠️ Sahi rakam daalo!'); return; }
     const now = new Date();
     const entry = {
-      id: Date.now(), type, desc, amount, method, category, note,
+      id: genId(), type, desc, amount, method, category, note,
       time: now.toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit'}),
       dateISO,
       date: dateISO.split('-').reverse().join('/')
@@ -823,8 +942,11 @@
       document.querySelectorAll('.tab')[3].classList.add('active');
       document.getElementById('nav-reports').classList.add('active');
       renderReports();
+      renderBackupStatus();
     }
   }
+
+  function goToBackupTab() { switchTab('reports'); }
 
   function getAllDates() {
     const set = new Set(entries.map(e => e.dateISO).filter(Boolean));
@@ -1061,8 +1183,190 @@
 
     if (activeTab === 'entries') renderList();
     if (activeTab === 'chart') renderChart();
-    if (activeTab === 'reports') renderReports();
+    if (activeTab === 'reports') { renderReports(); renderBackupStatus(); }
   }
+
+  /* ══════════════════ BACKUP & RESTORE SYSTEM ══════════════════ */
+
+  function pad2(n) { return String(n).padStart(2, '0'); }
+
+  function backupFileTimestamp(d) {
+    return d.getFullYear() + '-' + pad2(d.getMonth()+1) + '-' + pad2(d.getDate()) + '_' +
+           pad2(d.getHours()) + '-' + pad2(d.getMinutes()) + '-' + pad2(d.getSeconds());
+  }
+
+  function buildBackupObject() {
+    return {
+      appName: 'Mera Paisa',
+      backupVersion: 1,
+      createdAt: new Date().toISOString(),
+      data: {
+        transactions: entries,
+        lockedDates: lockedDates,
+        settings: {}
+      }
+    };
+  }
+
+  function downloadJSON(obj, filename) {
+    const blob = new Blob([JSON.stringify(obj, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
+  async function exportBackup() {
+    try {
+      const backup = buildBackupObject();
+      const now = new Date();
+      downloadJSON(backup, 'MeraPaise_Backup_' + backupFileTimestamp(now) + '.json');
+      lastBackupTs = now.getTime();
+      await saveLastBackupTs();
+      renderBackupStatus();
+      checkBackupReminder();
+      showToast('✅ Backup download ho gaya!');
+    } catch (err) {
+      console.error(err);
+      showToast('⚠️ Backup banane mein error aayi');
+    }
+  }
+
+  function validateBackupShape(obj) {
+    if (!obj || typeof obj !== 'object') return 'Invalid backup file.';
+    if (obj.appName !== 'Mera Paisa') return 'This file is not a valid Mera Paisa backup.';
+    if (!obj.data || typeof obj.data !== 'object') return 'This file is not a valid Mera Paisa backup.';
+    if (!Array.isArray(obj.data.transactions)) return 'This file is not a valid Mera Paisa backup.';
+    if (!obj.data.transactions.length) return 'Backup file khaali hai, koi records nahi mile.';
+    for (const t of obj.data.transactions) {
+      if (typeof t !== 'object' || !('amount' in t) || !('type' in t)) {
+        return 'Backup mein kuch records ki jaankari missing hai.';
+      }
+    }
+    return null;
+  }
+
+  function handleImportFile(event) {
+    const file = event.target.files[0];
+    event.target.value = '';
+    if (!file) return;
+    if (file.size > 20 * 1024 * 1024) { showToast('⚠️ File bahut badi hai (max 20MB).'); return; }
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      let parsed;
+      try {
+        parsed = JSON.parse(e.target.result);
+      } catch (err) {
+        showToast('❌ Invalid backup file.');
+        return;
+      }
+      const error = validateBackupShape(parsed);
+      if (error) { showToast('❌ ' + error); return; }
+      pendingImportData = parsed;
+      openImportModal(parsed);
+    };
+    reader.onerror = () => showToast('❌ File padhne mein error aayi.');
+    reader.readAsText(file);
+  }
+
+  function openImportModal(backup) {
+    const txns = backup.data.transactions;
+    const dates = txns.map(t => t.dateISO).filter(Boolean).sort();
+    const dateRange = dates.length ? formatDateLabel(dates[0]) + ' — ' + formatDateLabel(dates[dates.length-1]) : 'N/A';
+    const createdAt = backup.createdAt ? new Date(backup.createdAt).toLocaleString('en-IN') : 'Unknown';
+
+    document.getElementById('importInfoBody').innerHTML = `
+      <p>Ye backup file aapke current data ko badal sakti hai. Neeche backup ki jaankari dekho aur mode chuno:</p>
+      <div class="modal-info-row"><span>Backup Date</span><span>${createdAt}</span></div>
+      <div class="modal-info-row"><span>Total Records</span><span>${txns.length}</span></div>
+      <div class="modal-info-row"><span>Date Range</span><span>${dateRange}</span></div>
+      <div class="modal-info-row"><span>Aapke Current Records</span><span>${entries.length}</span></div>
+    `;
+    document.getElementById('importModal').classList.add('show');
+  }
+
+  function closeImportModal() {
+    document.getElementById('importModal').classList.remove('show');
+    pendingImportData = null;
+  }
+
+  async function confirmImport(mode) {
+    if (!pendingImportData) { closeImportModal(); return; }
+    const backup = pendingImportData;
+    const incoming = backup.data.transactions;
+    const incomingLocked = Array.isArray(backup.data.lockedDates) ? backup.data.lockedDates : [];
+
+    if (mode === 'replace') {
+      const sure = confirm('Aapka current data is backup se REPLACE ho jaayega.\nEk safety backup pehle download hogi.\n\nContinue karein?');
+      if (!sure) return;
+      // FEATURE 5: safety backup before destructive operation
+      const safety = buildBackupObject();
+      downloadJSON(safety, 'MeraPaise_SafetyBackup_' + backupFileTimestamp(new Date()) + '.json');
+
+      // ensure every incoming record has a stable id
+      incoming.forEach(t => { if (!t.id) t.id = genId(); });
+      entries = incoming;
+      lockedDates = incomingLocked;
+      await save();
+      await saveLocked();
+      populateDateScopes();
+      render();
+      closeImportModal();
+      showToast('✅ Backup restored successfully.');
+    } else {
+      // MERGE mode — prevent duplicates using unique ID
+      const existingIds = new Set(entries.map(e => e.id));
+      let added = 0;
+      incoming.forEach(t => {
+        if (!t.id) t.id = genId();
+        if (!existingIds.has(t.id)) {
+          entries.push(t);
+          existingIds.add(t.id);
+          added++;
+        }
+      });
+      // merge locked dates too, without unlocking anything
+      incomingLocked.forEach(d => { if (!lockedDates.includes(d)) lockedDates.push(d); });
+
+      entries.sort((a, b) => (b.dateISO || '').localeCompare(a.dateISO || '') || (b.id > a.id ? 1 : -1));
+
+      await save();
+      await saveLocked();
+      populateDateScopes();
+      render();
+      closeImportModal();
+      if (added > 0) {
+        showToast(`✅ Backup imported successfully. ${added} new records were added.`);
+      } else {
+        showToast('ℹ️ No duplicate records were added.');
+      }
+    }
+  }
+
+  function renderBackupStatus() {
+    document.getElementById('totalRecordsVal').textContent = entries.length;
+    const el = document.getElementById('lastBackupVal');
+    if (!lastBackupTs) {
+      el.textContent = 'Never';
+    } else {
+      el.textContent = new Date(lastBackupTs).toLocaleString('en-IN', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' });
+    }
+  }
+
+  function checkBackupReminder() {
+    const banner = document.getElementById('backupReminder');
+    if (!entries.length) { banner.classList.remove('show'); return; }
+    const sevenDays = 7 * 24 * 60 * 60 * 1000;
+    const overdue = !lastBackupTs || (Date.now() - lastBackupTs) > sevenDays;
+    banner.classList.toggle('show', overdue);
+  }
+
+  /* ══════════════════ Init ══════════════════ */
 
   // ── Init: load saved data first, then boot the UI ──
   async function init() {
@@ -1078,10 +1382,18 @@
     } catch (err) {
       lockedDates = [];
     }
+    try {
+      const b = await window.storage.get('mp_last_backup_ts');
+      lastBackupTs = b && b.value ? Number(b.value) : null;
+      if (isNaN(lastBackupTs)) lastBackupTs = null;
+    } catch (err) {
+      lastBackupTs = null;
+    }
     migrateEntries();
     setDate();
     populateDateScopes();
     render();
+    checkBackupReminder();
     document.getElementById('loadingOverlay').style.display = 'none';
   }
   init();

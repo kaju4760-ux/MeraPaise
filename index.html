@@ -315,10 +315,24 @@
   .entry-amount { font-size: 16px; font-weight: 600; flex-shrink: 0; }
   .amt-in { color: var(--green); }
   .amt-out { color: var(--red); }
+  .entry-del {
+    flex-shrink: 0; width: 26px; height: 26px; border-radius: 8px;
+    background: var(--surface2); border: 0.5px solid var(--border2); color: var(--text2);
+    font-size: 13px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+  }
+  .entry-del:hover { background: var(--red-dim); color: var(--red); border-color: var(--red-border); }
 
   .empty-state { text-align: center; padding: 50px 20px; }
   .empty-state .icon { font-size: 40px; margin-bottom: 12px; opacity: 0.3; }
   .empty-state p { font-size: 13px; color: var(--text3); }
+
+  .onboard-card {
+    background: var(--green-dim); border: 0.5px solid var(--green-border);
+    border-radius: var(--radius); padding: 16px 18px; margin-bottom: 14px;
+  }
+  .onboard-card h4 { font-size: 13px; font-weight: 600; color: var(--green); margin-bottom: 8px; }
+  .onboard-card ol { padding-left: 18px; }
+  .onboard-card li { font-size: 12px; color: var(--text2); line-height: 1.7; }
 
   .chart-section { display: none; }
   .chart-section.active { display: block; }
@@ -384,6 +398,19 @@
   }
   .btn-pdf.primary { background: var(--gold-dim); color: var(--gold); border-color: rgba(251,191,36,0.3); }
   .btn-pdf:active { transform: scale(0.98); }
+  .correction-note-wrap { margin-top: 10px; }
+  .correction-note-wrap textarea {
+    width: 100%; background: var(--surface2); border: 0.5px solid var(--border2);
+    border-radius: var(--radius-sm); padding: 8px 10px; font-size: 12px; color: var(--text);
+    font-family: 'DM Sans', sans-serif; resize: vertical; min-height: 44px; outline: none;
+  }
+  .correction-note-wrap .note-label { font-size: 10px; color: var(--gold); text-transform: uppercase; margin-bottom: 5px; display: block; }
+  .correction-note-wrap .note-save {
+    margin-top: 6px; font-size: 11px; padding: 6px 12px; border-radius: 20px;
+    background: var(--gold-dim); color: var(--gold); border: 0.5px solid rgba(251,191,36,0.3);
+    cursor: pointer; font-family: 'DM Sans', sans-serif;
+  }
+  .existing-note { font-size: 11.5px; color: var(--text2); background: var(--surface2); border-radius: var(--radius-sm); padding: 8px 10px; margin-top: 8px; line-height: 1.5; }
 
   .bottom-nav {
     position: fixed; bottom: 0; left: 0; right: 0;
@@ -445,9 +472,15 @@
 
   .loading-overlay {
     position: fixed; inset: 0; background: var(--bg);
-    display: flex; align-items: center; justify-content: center;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;
     z-index: 999; color: var(--text2); font-size: 13px;
   }
+  .loading-spinner {
+    width: 34px; height: 34px; border-radius: 50%;
+    border: 3px solid var(--surface2); border-top-color: var(--green);
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
 
   /* ── Backup & Restore additions ── */
   .backup-reminder {
@@ -482,6 +515,11 @@
     padding: 13px; border-radius: var(--radius-sm); font-size: 13px; font-weight: 600;
     cursor: pointer; font-family: 'DM Sans', sans-serif; text-align: center;
   }
+  .btn-csv {
+    background: var(--gold-dim); color: var(--gold); border: 0.5px solid rgba(251,191,36,0.3);
+    padding: 13px; border-radius: var(--radius-sm); font-size: 13px; font-weight: 600;
+    cursor: pointer; font-family: 'DM Sans', sans-serif; text-align: center; margin-top: 10px; width: 100%;
+  }
   #importFileInput { display: none; }
 
   .modal-overlay {
@@ -511,13 +549,62 @@
   .modal-btn.merge { background: var(--paytm-dim); color: var(--paytm); border: 0.5px solid var(--paytm-border); }
   .modal-btn.replace { background: var(--red-dim); color: var(--red); border: 0.5px solid var(--red-border); }
   .modal-btn.cancel { background: var(--surface2); color: var(--text2); border: 0.5px solid var(--border2); }
+
+  /* ── PIN lock screen ── */
+  .pin-screen {
+    position: fixed; inset: 0; background: var(--bg); z-index: 1000;
+    display: none; flex-direction: column; align-items: center; justify-content: center; gap: 18px;
+    padding: 24px;
+  }
+  .pin-screen.show { display: flex; }
+  .pin-screen h2 { font-family: 'Playfair Display', serif; font-size: 22px; }
+  .pin-screen h2 span { color: var(--green); }
+  .pin-dots { display: flex; gap: 14px; }
+  .pin-dot { width: 14px; height: 14px; border-radius: 50%; border: 1.5px solid var(--border2); background: transparent; transition: all 0.15s; }
+  .pin-dot.filled { background: var(--green); border-color: var(--green); }
+  .pin-pad { display: grid; grid-template-columns: repeat(3, 64px); gap: 14px; margin-top: 6px; }
+  .pin-key {
+    width: 64px; height: 64px; border-radius: 50%; background: var(--surface);
+    border: 0.5px solid var(--border2); color: var(--text); font-size: 20px;
+    font-family: 'DM Sans', sans-serif; cursor: pointer;
+  }
+  .pin-key:active { background: var(--surface2); }
+  .pin-key.ghost { background: transparent; border: none; cursor: default; }
+  .pin-error { color: var(--red); font-size: 12px; min-height: 16px; }
+  .pin-sub { color: var(--text2); font-size: 12px; text-align: center; max-width: 260px; line-height: 1.5; }
+  .pin-skip { color: var(--text3); font-size: 12px; text-decoration: underline; cursor: pointer; margin-top: 6px; background: none; border: none; font-family: 'DM Sans', sans-serif; }
+
+  .amt-range-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 14px; }
+  .amt-range-row input {
+    width: 100%; background: var(--surface2); border: 0.5px solid var(--border2);
+    border-radius: var(--radius-sm); padding: 9px 12px; font-size: 12.5px; color: var(--text);
+    font-family: 'DM Sans', sans-serif; outline: none;
+  }
+  .search-row { margin-bottom: 10px; }
+  .search-row input {
+    width: 100%; background: var(--surface2); border: 0.5px solid var(--border2);
+    border-radius: var(--radius-sm); padding: 10px 14px; font-size: 13px; color: var(--text);
+    font-family: 'DM Sans', sans-serif; outline: none;
+  }
 </style>
 </head>
 <body>
 
 <div id="cursorGlow"></div>
 <div id="rupees-container"></div>
-<div class="loading-overlay" id="loadingOverlay">Load ho raha hai...</div>
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="loading-spinner"></div>
+  <div>Load ho raha hai...</div>
+</div>
+
+<div class="pin-screen" id="pinScreen">
+  <h2>Mera <span>Paisa</span></h2>
+  <div class="pin-sub" id="pinSub">Apna 4-digit PIN daalo</div>
+  <div class="pin-dots" id="pinDots"></div>
+  <div class="pin-error" id="pinError"></div>
+  <div class="pin-pad" id="pinPad"></div>
+  <button class="pin-skip" id="pinSkipBtn" onclick="skipPinSetup()">Abhi PIN skip karo</button>
+</div>
 
 <div class="wrapper">
   <div class="header">
@@ -571,6 +658,15 @@
   </div>
 
   <div class="form-section active" id="tab-entry">
+    <div class="onboard-card" id="onboardCard" style="display:none">
+      <h4>👋 Swagat hai! Shuruaat aise karo:</h4>
+      <ol>
+        <li>Neeche form mein aaj ka kharch ya income daalo</li>
+        <li><strong>Entries</strong> tab mein apni list dekho</li>
+        <li><strong>Chart</strong> tab mein category-wise breakdown dekho</li>
+        <li><strong>Reports</strong> tab se roz ka PDF banao aur backup lo</li>
+      </ol>
+    </div>
     <div class="form-card">
       <h3>Nayi Entry Daalo</h3>
       <div class="lock-warning" id="lockWarning">🔒 Ye tareekh PDF mai lock ho chuki hai — is din ki entry ab add nahi ho sakti.</div>
@@ -602,7 +698,7 @@
       </div>
       <div class="frow">
         <label>Category</label>
-        <select id="category">
+        <select id="category" onchange="handleCategorySelect()">
           <option value="Khaana">🍛 Khaana / Groceries</option>
           <option value="Transport">🚗 Transport</option>
           <option value="Bill">💡 Bill / Recharge</option>
@@ -612,6 +708,7 @@
           <option value="Medical">🏥 Medical</option>
           <option value="Entertainment">🎬 Entertainment</option>
           <option value="Other">📌 Other</option>
+          <option value="__add_new__">➕ Nayi Category Jodo...</option>
         </select>
       </div>
       <div class="frow">
@@ -630,6 +727,13 @@
       <select id="dateScopeSelect" onchange="onDateScopeChange()">
         <option value="all">📅 Sab Dates</option>
       </select>
+    </div>
+    <div class="search-row">
+      <input type="text" id="searchBox" placeholder="🔍 Vivran ya note se dhoondo..." oninput="renderList()" />
+    </div>
+    <div class="amt-range-row">
+      <input type="number" id="amtMin" placeholder="₹ Min amount" oninput="renderList()" />
+      <input type="number" id="amtMax" placeholder="₹ Max amount" oninput="renderList()" />
     </div>
     <div class="filter-row" id="filterRow">
       <div class="filter-chip active" onclick="setFilter('all', this)">Sab</div>
@@ -700,10 +804,16 @@
         <button class="btn-export" onclick="exportBackup()">⬇️ Export Backup</button>
         <button class="btn-import" onclick="document.getElementById('importFileInput').click()">⬆️ Import Backup</button>
       </div>
+      <button class="btn-csv" onclick="exportCSV()">📊 CSV / Excel Mein Export Karo</button>
       <input type="file" id="importFileInput" accept="application/json,.json" onchange="handleImportFile(event)" />
       <p style="font-size:11px;color:var(--text3);margin-top:12px;line-height:1.5">🔒 Backup file sirf tumhare device par save hota hai. Kahin upload nahi hota — 100% private.</p>
     </div>
-    <div class="report-note">💡 Har din ka PDF bana kar download karo. Ek baar PDF ban jaaye to us din ki entries lock ho jaati hain — fir naya entry ya edit us tareekh ke liye nahi ho sakta.</div>
+    <div class="report-card" id="pinSettingsCard">
+      <h3 style="font-size:14px;font-weight:600;margin-bottom:10px;color:var(--text)">🔐 App Lock (PIN)</h3>
+      <p style="font-size:11.5px;color:var(--text2);line-height:1.6;margin-bottom:10px" id="pinStatusText">PIN set nahi hai.</p>
+      <button class="btn-pdf" id="pinToggleBtn" onclick="openPinManage()">PIN Set Karo</button>
+    </div>
+    <div class="report-note">💡 Har din ka PDF bana kar download karo. Ek baar PDF ban jaaye to us din ki entries lock ho jaati hain — fir naya entry ya edit us tareekh ke liye nahi ho sakta. Agar koi galti reh gayi ho to neeche "Correction Note" mein likh sakte ho.</div>
     <div id="reportsList"></div>
   </div>
 </div>
@@ -741,21 +851,35 @@
 <script>
   let entries = [];
   let lockedDates = [];
+  let correctionNotes = {};
+  let customCategories = [];
   let activeFilter = 'all';
   let activeTab = 'entry';
   let dateScope = 'all';
   let chartScope = 'all';
   let lastBackupTs = null;
   let pendingImportData = null;
+  let savedPin = null;
+  let pinBuffer = '';
+  let pinMode = 'setup'; // 'setup' | 'confirm' | 'unlock' | 'change'
+  let pinFirstEntry = '';
 
-  const catColors = {
+  const baseCatColors = {
     Khaana:'#4ade80', Transport:'#60a5fa', Bill:'#fbbf24', Shopping:'#f472b6',
     Salary:'#34d399', Business:'#a78bfa', Medical:'#f87171', Entertainment:'#fb923c', Other:'#94a3b8'
   };
-  const catEmoji = {
+  const baseCatEmoji = {
     Khaana:'🍛', Transport:'🚗', Bill:'💡', Shopping:'🛍️',
     Salary:'💰', Business:'📊', Medical:'🏥', Entertainment:'🎬', Other:'📌'
   };
+  const customPalette = ['#22d3ee','#f97316','#c084fc','#facc15','#2dd4bf','#e879f9','#a3e635'];
+  function catColorFor(cat) {
+    if (baseCatColors[cat]) return baseCatColors[cat];
+    const idx = customCategories.indexOf(cat);
+    return customPalette[idx % customPalette.length] || '#94a3b8';
+  }
+  function catEmojiFor(cat) { return baseCatEmoji[cat] || '🏷️'; }
+
   const dayNames = ['Ravivar','Somvar','Mangalvar','Budhvar','Guruvar','Shukravar','Shanivar'];
   const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
@@ -798,7 +922,6 @@
         e.dateISO = parseIndianDateToISO(e.date) || null;
         changed = true;
       }
-      // FEATURE 8: ensure every entry has a stable unique ID without touching visible info
       if (e.id === undefined || e.id === null) {
         e.id = genId();
         changed = true;
@@ -830,6 +953,28 @@
       console.error('Backup timestamp save failed:', err);
     }
   }
+  async function saveCorrectionNotes() {
+    try {
+      await window.storage.set('mp_correction_notes', JSON.stringify(correctionNotes));
+    } catch (err) {
+      console.error('Correction notes save failed:', err);
+    }
+  }
+  async function saveCustomCategories() {
+    try {
+      await window.storage.set('mp_custom_categories', JSON.stringify(customCategories));
+    } catch (err) {
+      console.error('Custom categories save failed:', err);
+    }
+  }
+  async function savePin() {
+    try {
+      if (savedPin) await window.storage.set('mp_pin', savedPin);
+      else await window.storage.delete('mp_pin').catch(()=>{});
+    } catch (err) {
+      console.error('PIN save failed:', err);
+    }
+  }
 
   function isLocked(iso) { return !!iso && lockedDates.includes(iso); }
 
@@ -857,13 +1002,47 @@
     document.getElementById('btnOut').disabled = locked;
   }
 
+  function populateCategorySelect() {
+    const sel = document.getElementById('category');
+    const current = sel.value;
+    const addOpt = sel.querySelector('option[value="__add_new__"]');
+    customCategories.forEach(cat => {
+      if (!sel.querySelector(`option[value="${CSS.escape(cat)}"]`)) {
+        const opt = document.createElement('option');
+        opt.value = cat;
+        opt.textContent = catEmojiFor(cat) + ' ' + cat;
+        sel.insertBefore(opt, addOpt);
+      }
+    });
+    if (current && current !== '__add_new__') sel.value = current;
+  }
+
+  function handleCategorySelect() {
+    const sel = document.getElementById('category');
+    if (sel.value === '__add_new__') {
+      const name = prompt('Nayi category ka naam likho:');
+      sel.value = 'Other';
+      if (name && name.trim()) {
+        const clean = name.trim().slice(0, 24);
+        if (!customCategories.includes(clean) && !baseCatColors[clean]) {
+          customCategories.push(clean);
+          saveCustomCategories();
+        }
+        populateCategorySelect();
+        sel.value = clean;
+        showToast('✅ "' + clean + '" category jud gayi!');
+      }
+    }
+  }
+
   async function addEntry(type) {
     const dateISO = document.getElementById('entryDate').value || todayISO();
     if (isLocked(dateISO)) { showToast('🔒 Ye tareekh lock hai, entry nahi ho sakti!'); return; }
     const desc = document.getElementById('desc').value.trim();
     const amount = parseFloat(document.getElementById('amount').value);
     const method = document.getElementById('method').value;
-    const category = document.getElementById('category').value;
+    let category = document.getElementById('category').value;
+    if (category === '__add_new__') category = 'Other';
     const note = document.getElementById('note').value.trim();
     if (!desc) { showToast('⚠️ Vivran likhna zaroori hai!'); return; }
     if (!amount || amount <= 0) { showToast('⚠️ Sahi rakam daalo!'); return; }
@@ -876,7 +1055,6 @@
     };
     entries.unshift(entry);
 
-    // Update UI immediately (don't block on storage)
     document.getElementById('desc').value = '';
     document.getElementById('amount').value = '';
     document.getElementById('note').value = '';
@@ -884,6 +1062,18 @@
     render();
     showToast(type === 'income' ? '✅ Income add ho gayi!' : '✅ Expense add ho gayi!');
 
+    await save();
+  }
+
+  async function deleteEntry(id) {
+    const entry = entries.find(e => e.id === id);
+    if (!entry) return;
+    if (isLocked(entry.dateISO)) { showToast('🔒 Ye entry locked date ki hai, delete nahi ho sakti.'); return; }
+    if (!confirm('Pakka is entry ko delete karna hai?\n"' + entry.desc + '" — ' + fmt(entry.amount))) return;
+    entries = entries.filter(e => e.id !== id);
+    populateDateScopes();
+    render();
+    showToast('🗑️ Entry delete ho gayi.');
     await save();
   }
 
@@ -943,6 +1133,7 @@
       document.getElementById('nav-reports').classList.add('active');
       renderReports();
       renderBackupStatus();
+      renderPinStatus();
     }
   }
 
@@ -976,6 +1167,18 @@
     else if (activeFilter === 'Paytm') filtered = filtered.filter(e => e.method === 'Paytm');
     else if (activeFilter !== 'all') filtered = filtered.filter(e => e.category === activeFilter);
 
+    const searchTerm = (document.getElementById('searchBox')?.value || '').trim().toLowerCase();
+    if (searchTerm) {
+      filtered = filtered.filter(e =>
+        (e.desc || '').toLowerCase().includes(searchTerm) ||
+        (e.note || '').toLowerCase().includes(searchTerm)
+      );
+    }
+    const minV = parseFloat(document.getElementById('amtMin')?.value);
+    const maxV = parseFloat(document.getElementById('amtMax')?.value);
+    if (!isNaN(minV)) filtered = filtered.filter(e => e.amount >= minV);
+    if (!isNaN(maxV)) filtered = filtered.filter(e => e.amount <= maxV);
+
     const list = document.getElementById('entriesList');
     document.getElementById('entryCountLabel').textContent = filtered.length + ' entr' + (filtered.length === 1 ? 'y' : 'ies');
 
@@ -1005,7 +1208,7 @@
           </div>
           ${items.map(e => `
             <div class="entry-item">
-              <div class="entry-dot ${e.type === 'income' ? 'dot-in' : 'dot-out'}">${catEmoji[e.category] || '📌'}</div>
+              <div class="entry-dot ${e.type === 'income' ? 'dot-in' : 'dot-out'}">${catEmojiFor(e.category)}</div>
               <div class="entry-body">
                 <div class="entry-desc">${e.desc}</div>
                 <div class="entry-meta">
@@ -1016,6 +1219,7 @@
                 </div>
               </div>
               <div class="entry-amount ${e.type === 'income' ? 'amt-in' : 'amt-out'}">${e.type === 'income' ? '+' : '-'}${fmt(e.amount)}</div>
+              ${locked ? '' : `<button class="entry-del" onclick="deleteEntry('${e.id}')" title="Delete">✕</button>`}
             </div>
           `).join('')}
         </div>
@@ -1049,10 +1253,10 @@
     if (!cats.length) { grid.innerHTML = '<p style="color:var(--text3);font-size:13px;text-align:center;padding:20px 0">Koi entries nahi</p>'; return; }
     grid.innerHTML = cats.map(([cat, val]) => `
       <div class="cat-row">
-        <div class="cat-dot" style="background:${catColors[cat]||'#94a3b8'}"></div>
-        <span class="cat-name">${catEmoji[cat] || ''} ${cat}</span>
-        <div class="cat-bar"><div class="cat-bar-fill" style="width:${Math.round(val/maxCat*100)}%;background:${catColors[cat]||'#94a3b8'}"></div></div>
-        <span class="cat-val" style="color:${catColors[cat]||'#94a3b8'}">${fmt(val)}</span>
+        <div class="cat-dot" style="background:${catColorFor(cat)}"></div>
+        <span class="cat-name">${catEmojiFor(cat)} ${cat}</span>
+        <div class="cat-bar"><div class="cat-bar-fill" style="width:${Math.round(val/maxCat*100)}%;background:${catColorFor(cat)}"></div></div>
+        <span class="cat-val" style="color:${catColorFor(cat)}">${fmt(val)}</span>
       </div>
     `).join('');
   }
@@ -1069,6 +1273,14 @@
       let inc = 0, exp = 0;
       items.forEach(e => e.type === 'income' ? inc += e.amount : exp += e.amount);
       const locked = isLocked(iso);
+      const existingNote = correctionNotes[iso];
+      const correctionHtml = locked ? `
+        <div class="correction-note-wrap">
+          ${existingNote ? `<div class="existing-note">📝 <strong>Correction Note:</strong> ${existingNote}</div>` : ''}
+          <span class="note-label" style="margin-top:8px">${existingNote ? 'Note update karo' : 'Galti hui? Correction note likho'}</span>
+          <textarea id="cnote-${iso}" placeholder="Jaise: 'Entry ₹500 ki jagah ₹50 honi chahiye thi'"></textarea>
+          <button class="note-save" onclick="saveCorrectionNote('${iso}')">💾 Note Save Karo</button>
+        </div>` : '';
       return `
         <div class="report-card">
           <div class="report-top">
@@ -1084,9 +1296,20 @@
             <div class="report-num-block net"><div class="lbl">Net</div><div class="val">${fmt(inc-exp)}</div></div>
           </div>
           <button class="btn-pdf ${locked ? '' : 'primary'}" onclick="generatePDF('${iso}')">${locked ? '⬇️ PDF Dobara Download' : '📄 PDF Banao & Lock Karo'}</button>
+          ${correctionHtml}
         </div>
       `;
     }).join('');
+  }
+
+  async function saveCorrectionNote(iso) {
+    const ta = document.getElementById('cnote-' + iso);
+    const val = ta ? ta.value.trim() : '';
+    if (!val) { showToast('⚠️ Pehle note likho'); return; }
+    correctionNotes[iso] = val;
+    await saveCorrectionNotes();
+    renderReports();
+    showToast('✅ Correction note save ho gaya');
   }
 
   async function generatePDF(iso) {
@@ -1145,6 +1368,17 @@
     y += 7;
     doc.text('Net Balance: Rs ' + Math.round(inc - exp).toLocaleString('en-IN'), 14, y);
 
+    if (correctionNotes[iso]) {
+      y += 12;
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(10);
+      doc.text('Correction Note:', 14, y);
+      y += 6;
+      doc.setFont('helvetica', 'normal');
+      const lines = doc.splitTextToSize(correctionNotes[iso], 180);
+      doc.text(lines, 14, y);
+    }
+
     doc.save('MeraPaisa_' + iso + '.pdf');
 
     if (!isLocked(iso)) {
@@ -1181,9 +1415,11 @@
     document.getElementById('totalExpense').textContent = fmt(expense);
     document.getElementById('paytmTotal').textContent = fmt(paytm);
 
+    document.getElementById('onboardCard').style.display = entries.length ? 'none' : 'block';
+
     if (activeTab === 'entries') renderList();
     if (activeTab === 'chart') renderChart();
-    if (activeTab === 'reports') { renderReports(); renderBackupStatus(); }
+    if (activeTab === 'reports') { renderReports(); renderBackupStatus(); renderPinStatus(); }
   }
 
   /* ══════════════════ BACKUP & RESTORE SYSTEM ══════════════════ */
@@ -1198,11 +1434,13 @@
   function buildBackupObject() {
     return {
       appName: 'Mera Paisa',
-      backupVersion: 1,
+      backupVersion: 2,
       createdAt: new Date().toISOString(),
       data: {
         transactions: entries,
         lockedDates: lockedDates,
+        correctionNotes: correctionNotes,
+        customCategories: customCategories,
         settings: {}
       }
     };
@@ -1218,6 +1456,32 @@
     a.click();
     document.body.removeChild(a);
     setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
+  function csvEscape(val) {
+    const s = String(val === undefined || val === null ? '' : val);
+    if (/[",\n]/.test(s)) return '"' + s.replace(/"/g, '""') + '"';
+    return s;
+  }
+
+  function exportCSV() {
+    if (!entries.length) { showToast('Koi entries nahi hain export karne ke liye'); return; }
+    const header = ['Date','Time','Type','Description','Category','Method','Amount','Note'];
+    const rows = entries.slice().sort((a,b) => (a.dateISO||'').localeCompare(b.dateISO||'')).map(e => [
+      e.date || e.dateISO || '', e.time || '', e.type === 'income' ? 'Income' : 'Expense',
+      e.desc || '', e.category || '', e.method || '', e.amount, e.note || ''
+    ]);
+    const csv = [header, ...rows].map(r => r.map(csvEscape).join(',')).join('\n');
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'MeraPaisa_' + backupFileTimestamp(new Date()) + '.csv';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    showToast('✅ CSV export ho gaya!');
   }
 
   async function exportBackup() {
@@ -1300,26 +1564,30 @@
     const backup = pendingImportData;
     const incoming = backup.data.transactions;
     const incomingLocked = Array.isArray(backup.data.lockedDates) ? backup.data.lockedDates : [];
+    const incomingNotes = backup.data.correctionNotes && typeof backup.data.correctionNotes === 'object' ? backup.data.correctionNotes : {};
+    const incomingCats = Array.isArray(backup.data.customCategories) ? backup.data.customCategories : [];
 
     if (mode === 'replace') {
       const sure = confirm('Aapka current data is backup se REPLACE ho jaayega.\nEk safety backup pehle download hogi.\n\nContinue karein?');
       if (!sure) return;
-      // FEATURE 5: safety backup before destructive operation
       const safety = buildBackupObject();
       downloadJSON(safety, 'MeraPaise_SafetyBackup_' + backupFileTimestamp(new Date()) + '.json');
 
-      // ensure every incoming record has a stable id
       incoming.forEach(t => { if (!t.id) t.id = genId(); });
       entries = incoming;
       lockedDates = incomingLocked;
+      correctionNotes = incomingNotes;
+      customCategories = incomingCats;
       await save();
       await saveLocked();
+      await saveCorrectionNotes();
+      await saveCustomCategories();
       populateDateScopes();
+      populateCategorySelect();
       render();
       closeImportModal();
       showToast('✅ Backup restored successfully.');
     } else {
-      // MERGE mode — prevent duplicates using unique ID
       const existingIds = new Set(entries.map(e => e.id));
       let added = 0;
       incoming.forEach(t => {
@@ -1330,14 +1598,18 @@
           added++;
         }
       });
-      // merge locked dates too, without unlocking anything
       incomingLocked.forEach(d => { if (!lockedDates.includes(d)) lockedDates.push(d); });
+      Object.keys(incomingNotes).forEach(d => { if (!correctionNotes[d]) correctionNotes[d] = incomingNotes[d]; });
+      incomingCats.forEach(c => { if (!customCategories.includes(c)) customCategories.push(c); });
 
       entries.sort((a, b) => (b.dateISO || '').localeCompare(a.dateISO || '') || (b.id > a.id ? 1 : -1));
 
       await save();
       await saveLocked();
+      await saveCorrectionNotes();
+      await saveCustomCategories();
       populateDateScopes();
+      populateCategorySelect();
       render();
       closeImportModal();
       if (added > 0) {
@@ -1366,9 +1638,120 @@
     banner.classList.toggle('show', overdue);
   }
 
+  /* ══════════════════ PIN LOCK ══════════════════ */
+
+  function renderPinStatus() {
+    const txt = document.getElementById('pinStatusText');
+    const btn = document.getElementById('pinToggleBtn');
+    if (savedPin) {
+      txt.textContent = '🔐 PIN set hai — app kholte hi PIN maanga jaayega.';
+      btn.textContent = 'PIN Badlo ya Hatao';
+    } else {
+      txt.textContent = 'PIN set nahi hai — koi bhi is app ko khol sakta hai.';
+      btn.textContent = 'PIN Set Karo';
+    }
+  }
+
+  function openPinManage() {
+    if (!savedPin) {
+      startPinFlow('setup');
+    } else {
+      const choice = confirm('OK dabao PIN badalne ke liye, Cancel dabao PIN hatane ke liye.');
+      if (choice) startPinFlow('change');
+      else removePinDirect();
+    }
+  }
+
+  async function removePinDirect() {
+    if (!confirm('Pakka PIN hatana hai? App bina lock ke khulega.')) return;
+    savedPin = null;
+    await savePin();
+    renderPinStatus();
+    showToast('🔓 PIN hata diya gaya.');
+  }
+
+  function startPinFlow(mode) {
+    pinMode = mode;
+    pinBuffer = '';
+    pinFirstEntry = '';
+    document.getElementById('pinError').textContent = '';
+    document.getElementById('pinSkipBtn').style.display = (mode === 'unlock') ? 'none' : 'inline-block';
+    document.getElementById('pinSub').textContent =
+      mode === 'unlock' ? 'App unlock karne ke liye PIN daalo' : 'Naya 4-digit PIN banao';
+    buildPinPad();
+    renderPinDots();
+    document.getElementById('pinScreen').classList.add('show');
+  }
+
+  function skipPinSetup() {
+    document.getElementById('pinScreen').classList.remove('show');
+  }
+
+  function buildPinPad() {
+    const pad = document.getElementById('pinPad');
+    const keys = ['1','2','3','4','5','6','7','8','9','','0','⌫'];
+    pad.innerHTML = keys.map(k => {
+      if (k === '') return '<div class="pin-key ghost"></div>';
+      if (k === '⌫') return `<button class="pin-key" onclick="pinBackspace()">⌫</button>`;
+      return `<button class="pin-key" onclick="pinPress('${k}')">${k}</button>`;
+    }).join('');
+  }
+
+  function renderPinDots() {
+    const dots = document.getElementById('pinDots');
+    dots.innerHTML = [0,1,2,3].map(i => `<div class="pin-dot ${i < pinBuffer.length ? 'filled' : ''}"></div>`).join('');
+  }
+
+  function pinBackspace() {
+    pinBuffer = pinBuffer.slice(0, -1);
+    renderPinDots();
+    document.getElementById('pinError').textContent = '';
+  }
+
+  async function pinPress(digit) {
+    if (pinBuffer.length >= 4) return;
+    pinBuffer += digit;
+    renderPinDots();
+    if (pinBuffer.length === 4) {
+      setTimeout(() => handlePinComplete(), 150);
+    }
+  }
+
+  async function handlePinComplete() {
+    if (pinMode === 'unlock') {
+      if (pinBuffer === savedPin) {
+        document.getElementById('pinScreen').classList.remove('show');
+      } else {
+        document.getElementById('pinError').textContent = '❌ Galat PIN, dobara try karo';
+        pinBuffer = '';
+        renderPinDots();
+      }
+      return;
+    }
+    if (!pinFirstEntry) {
+      pinFirstEntry = pinBuffer;
+      pinBuffer = '';
+      renderPinDots();
+      document.getElementById('pinSub').textContent = 'PIN dobara confirm karo';
+      return;
+    }
+    if (pinBuffer === pinFirstEntry) {
+      savedPin = pinBuffer;
+      await savePin();
+      document.getElementById('pinScreen').classList.remove('show');
+      renderPinStatus();
+      showToast('✅ PIN set ho gaya!');
+    } else {
+      document.getElementById('pinError').textContent = '❌ PIN match nahi hua, dobara try karo';
+      pinFirstEntry = '';
+      pinBuffer = '';
+      renderPinDots();
+      document.getElementById('pinSub').textContent = 'Naya 4-digit PIN banao';
+    }
+  }
+
   /* ══════════════════ Init ══════════════════ */
 
-  // ── Init: load saved data first, then boot the UI ──
   async function init() {
     try {
       const e = await window.storage.get('mp_entries_v2');
@@ -1389,12 +1772,36 @@
     } catch (err) {
       lastBackupTs = null;
     }
+    try {
+      const n = await window.storage.get('mp_correction_notes');
+      correctionNotes = n && n.value ? JSON.parse(n.value) : {};
+    } catch (err) {
+      correctionNotes = {};
+    }
+    try {
+      const c = await window.storage.get('mp_custom_categories');
+      customCategories = c && c.value ? JSON.parse(c.value) : [];
+    } catch (err) {
+      customCategories = [];
+    }
+    try {
+      const p = await window.storage.get('mp_pin');
+      savedPin = p && p.value ? p.value : null;
+    } catch (err) {
+      savedPin = null;
+    }
+
     migrateEntries();
     setDate();
     populateDateScopes();
+    populateCategorySelect();
     render();
     checkBackupReminder();
     document.getElementById('loadingOverlay').style.display = 'none';
+
+    if (savedPin) {
+      startPinFlow('unlock');
+    }
   }
   init();
 

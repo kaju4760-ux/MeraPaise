@@ -8,6 +8,7 @@
 <meta name="theme-color" content="#000000">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <style>
   :root {
     --bg: #0d0f14;
@@ -482,12 +483,12 @@
   }
   @keyframes spin { to { transform: rotate(360deg); } }
 
-  /* ── Backup & Restore additions ── */
+  /* ── Backup & Restore ── */
   .backup-reminder {
     display: none;
     background: var(--gold-dim); border: 0.5px solid rgba(251,191,36,0.3);
     border-radius: var(--radius-sm); padding: 10px 12px; margin-bottom: 14px;
-    font-size: 12px; color: var(--gold); display: none;
+    font-size: 12px; color: var(--gold);
     align-items: center; justify-content: space-between; gap: 10px;
   }
   .backup-reminder.show { display: flex; }
@@ -586,6 +587,29 @@
     border-radius: var(--radius-sm); padding: 10px 14px; font-size: 13px; color: var(--text);
     font-family: 'DM Sans', sans-serif; outline: none;
   }
+
+  /* ── Auth (login/signup) screen ── */
+  .auth-screen {
+    position: fixed; inset: 0; background: var(--bg); z-index: 1001;
+    display: none; flex-direction: column; align-items: center; justify-content: center; gap: 18px;
+    padding: 24px;
+  }
+  .auth-screen.show { display: flex; }
+  .auth-screen h2 { font-family: 'Playfair Display', serif; font-size: 26px; }
+  .auth-screen h2 span { color: var(--green); }
+  .auth-sub { color: var(--text2); font-size: 12.5px; text-align: center; }
+  .auth-card {
+    background: var(--surface); border: 0.5px solid var(--border);
+    border-radius: var(--radius); padding: 22px; width: 100%; max-width: 340px;
+  }
+  .auth-error { font-size: 12px; min-height: 16px; margin: 6px 0 10px; line-height: 1.5; }
+  .auth-toggle { text-align: center; font-size: 12.5px; color: var(--text2); margin-top: 14px; cursor: pointer; }
+  .auth-toggle strong { color: var(--green); }
+  .logout-btn {
+    width: 100%; padding: 11px; border-radius: var(--radius-sm); border: 0.5px solid var(--red-border);
+    background: var(--red-dim); color: var(--red); font-size: 13px; font-weight: 600;
+    cursor: pointer; font-family: 'DM Sans', sans-serif; margin-top: 10px;
+  }
 </style>
 </head>
 <body>
@@ -595,6 +619,24 @@
 <div class="loading-overlay" id="loadingOverlay">
   <div class="loading-spinner"></div>
   <div>Load ho raha hai...</div>
+</div>
+
+<div class="auth-screen" id="authScreen">
+  <h2>Mera <span>Paisa</span></h2>
+  <div class="auth-sub">Apna data cloud mein save karne ke liye login karo</div>
+  <div class="auth-card">
+    <div class="frow">
+      <label>Email</label>
+      <input type="email" id="authEmail" placeholder="you@example.com" autocomplete="email" />
+    </div>
+    <div class="frow">
+      <label>Password</label>
+      <input type="password" id="authPassword" placeholder="••••••••" autocomplete="current-password" />
+    </div>
+    <div class="auth-error" id="authError"></div>
+    <button class="btn btn-in" style="width:100%" id="authSubmitBtn" onclick="handleAuthSubmit()">Login Karo</button>
+    <div class="auth-toggle" id="authToggleText" onclick="toggleAuthMode()">Account nahi hai? <strong>Sign Up karo</strong></div>
+  </div>
 </div>
 
 <div class="pin-screen" id="pinScreen">
@@ -806,12 +848,17 @@
       </div>
       <button class="btn-csv" onclick="exportCSV()">📊 CSV / Excel Mein Export Karo</button>
       <input type="file" id="importFileInput" accept="application/json,.json" onchange="handleImportFile(event)" />
-      <p style="font-size:11px;color:var(--text3);margin-top:12px;line-height:1.5">🔒 Backup file sirf tumhare device par save hota hai. Kahin upload nahi hota — 100% private.</p>
+      <p style="font-size:11px;color:var(--text3);margin-top:12px;line-height:1.5">☁️ Aapka data Supabase cloud database mein securely save hota hai, sirf aap hi access kar sakte ho.</p>
     </div>
     <div class="report-card" id="pinSettingsCard">
       <h3 style="font-size:14px;font-weight:600;margin-bottom:10px;color:var(--text)">🔐 App Lock (PIN)</h3>
       <p style="font-size:11.5px;color:var(--text2);line-height:1.6;margin-bottom:10px" id="pinStatusText">PIN set nahi hai.</p>
       <button class="btn-pdf" id="pinToggleBtn" onclick="openPinManage()">PIN Set Karo</button>
+    </div>
+    <div class="report-card" id="accountCard">
+      <h3 style="font-size:14px;font-weight:600;margin-bottom:10px;color:var(--text)">👤 Account</h3>
+      <p style="font-size:11.5px;color:var(--text2);line-height:1.6" id="accountEmailText">—</p>
+      <button class="logout-btn" onclick="handleLogout()">Logout Karo</button>
     </div>
     <div class="report-note">💡 Har din ka PDF bana kar download karo. Ek baar PDF ban jaaye to us din ki entries lock ho jaati hain — fir naya entry ya edit us tareekh ke liye nahi ho sakta. Agar koi galti reh gayi ho to neeche "Correction Note" mein likh sakte ho.</div>
     <div id="reportsList"></div>
@@ -849,6 +896,11 @@
 </div>
 
 <script>
+  /* ══════════════════ SUPABASE SETUP ══════════════════ */
+  const SUPABASE_URL = 'https://ewlptjgpoumtluuezvey.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV3bHB0amdwb3VtdGx1dWV6dmV5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcyMDc1MjIsImV4cCI6MjEwMjc4MzUyMn0.uSmARVbWrjLhC9nI5fLIPPpI5m9wC6FQVvazZ3YZVOs';
+  const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
   let entries = [];
   let lockedDates = [];
   let correctionNotes = {};
@@ -863,6 +915,8 @@
   let pinBuffer = '';
   let pinMode = 'setup'; // 'setup' | 'confirm' | 'unlock' | 'change'
   let pinFirstEntry = '';
+  let currentUser = null;
+  let authMode = 'login'; // 'login' | 'signup'
 
   const baseCatColors = {
     Khaana:'#4ade80', Transport:'#60a5fa', Bill:'#fbbf24', Shopping:'#f472b6',
@@ -890,15 +944,6 @@
     return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
   }
 
-  function parseIndianDateToISO(str) {
-    if (!str) return null;
-    const parts = str.split('/');
-    if (parts.length !== 3) return null;
-    const [d, m, y] = parts;
-    if (!d || !m || !y) return null;
-    return y.padStart(4,'0') + '-' + m.padStart(2,'0') + '-' + d.padStart(2,'0');
-  }
-
   function formatDateLabel(iso) {
     if (!iso) return 'Purani Entry';
     const parts = iso.split('-');
@@ -910,72 +955,6 @@
     return label;
   }
 
-  function genId() {
-    if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
-    return 'id_' + Date.now() + '_' + Math.random().toString(36).slice(2, 10);
-  }
-
-  function migrateEntries() {
-    let changed = false;
-    entries.forEach(e => {
-      if (!e.dateISO) {
-        e.dateISO = parseIndianDateToISO(e.date) || null;
-        changed = true;
-      }
-      if (e.id === undefined || e.id === null) {
-        e.id = genId();
-        changed = true;
-      }
-    });
-    if (changed) save();
-  }
-
-  // ── Persistent storage (artifact-safe, replaces localStorage) ──
-  async function save() {
-    try {
-      await window.storage.set('mp_entries_v2', JSON.stringify(entries));
-    } catch (err) {
-      console.error('Entries save failed:', err);
-      showToast('⚠️ Save nahi ho paya, dobara try karo');
-    }
-  }
-  async function saveLocked() {
-    try {
-      await window.storage.set('mp_locked_dates', JSON.stringify(lockedDates));
-    } catch (err) {
-      console.error('Locked dates save failed:', err);
-    }
-  }
-  async function saveLastBackupTs() {
-    try {
-      await window.storage.set('mp_last_backup_ts', String(lastBackupTs));
-    } catch (err) {
-      console.error('Backup timestamp save failed:', err);
-    }
-  }
-  async function saveCorrectionNotes() {
-    try {
-      await window.storage.set('mp_correction_notes', JSON.stringify(correctionNotes));
-    } catch (err) {
-      console.error('Correction notes save failed:', err);
-    }
-  }
-  async function saveCustomCategories() {
-    try {
-      await window.storage.set('mp_custom_categories', JSON.stringify(customCategories));
-    } catch (err) {
-      console.error('Custom categories save failed:', err);
-    }
-  }
-  async function savePin() {
-    try {
-      if (savedPin) await window.storage.set('mp_pin', savedPin);
-      else await window.storage.delete('mp_pin').catch(()=>{});
-    } catch (err) {
-      console.error('PIN save failed:', err);
-    }
-  }
-
   function isLocked(iso) { return !!iso && lockedDates.includes(iso); }
 
   function showToast(msg) {
@@ -984,6 +963,168 @@
     t.classList.add('show');
     setTimeout(() => t.classList.remove('show'), 2800);
   }
+
+  /* ══════════════════ AUTH ══════════════════ */
+
+  function toggleAuthMode() {
+    authMode = authMode === 'login' ? 'signup' : 'login';
+    document.getElementById('authSubmitBtn').textContent = authMode === 'login' ? 'Login Karo' : 'Sign Up Karo';
+    document.getElementById('authToggleText').innerHTML = authMode === 'login'
+      ? 'Account nahi hai? <strong>Sign Up karo</strong>'
+      : 'Pehle se account hai? <strong>Login karo</strong>';
+    document.getElementById('authError').textContent = '';
+  }
+
+  async function handleAuthSubmit() {
+    const email = document.getElementById('authEmail').value.trim();
+    const password = document.getElementById('authPassword').value;
+    const errEl = document.getElementById('authError');
+    errEl.style.color = 'var(--red)';
+    errEl.textContent = '';
+    if (!email || !password) { errEl.textContent = 'Email aur password dono zaroori hain'; return; }
+    if (password.length < 6) { errEl.textContent = 'Password kam se kam 6 characters ka ho'; return; }
+
+    const btn = document.getElementById('authSubmitBtn');
+    btn.disabled = true;
+    btn.textContent = 'Ruko...';
+
+    try {
+      if (authMode === 'signup') {
+        const { data, error } = await sb.auth.signUp({ email, password });
+        if (error) throw error;
+        if (data.user && !data.session) {
+          errEl.style.color = 'var(--green)';
+          errEl.textContent = '✅ Signup ho gaya! Agar email confirmation maanga jaaye to email check karo, phir login karo.';
+          btn.disabled = false;
+          btn.textContent = 'Sign Up Karo';
+          return;
+        }
+      } else {
+        const { data, error } = await sb.auth.signInWithPassword({ email, password });
+        if (error) throw error;
+      }
+      // onAuthStateChange listener will boot the app
+    } catch (err) {
+      errEl.style.color = 'var(--red)';
+      errEl.textContent = '❌ ' + (err.message || 'Kuch galat ho gaya, dobara try karo');
+      btn.disabled = false;
+      btn.textContent = authMode === 'login' ? 'Login Karo' : 'Sign Up Karo';
+    }
+  }
+
+  async function handleLogout() {
+    if (!confirm('Pakka logout karna hai?')) return;
+    await sb.auth.signOut();
+  }
+
+  sb.auth.onAuthStateChange((event, session) => {
+    if (session && session.user) {
+      if (!currentUser || currentUser.id !== session.user.id) {
+        currentUser = session.user;
+        document.getElementById('authScreen').classList.remove('show');
+        const be = document.getElementById('authSubmitBtn');
+        be.disabled = false;
+        be.textContent = authMode === 'login' ? 'Login Karo' : 'Sign Up Karo';
+        boot();
+      }
+    } else {
+      currentUser = null;
+      document.getElementById('loadingOverlay').style.display = 'none';
+      document.getElementById('pinScreen').classList.remove('show');
+      document.getElementById('authScreen').classList.add('show');
+    }
+  });
+
+  /* ══════════════════ SUPABASE DATA LOADERS ══════════════════ */
+
+  function mapRowToEntry(r) {
+    return {
+      id: r.id, type: r.type, desc: r.description, amount: Number(r.amount),
+      method: r.method, category: r.category, note: r.note || '',
+      time: r.time_str || '', dateISO: r.date_iso,
+      date: r.date_iso ? r.date_iso.split('-').reverse().join('/') : ''
+    };
+  }
+
+  async function loadEntries() {
+    const { data, error } = await sb.from('entries').select('*')
+      .eq('user_id', currentUser.id)
+      .order('date_iso', { ascending: false })
+      .order('created_at', { ascending: false });
+    if (error) { console.error(error); showToast('⚠️ Entries load nahi hui'); return []; }
+    return data.map(mapRowToEntry);
+  }
+
+  async function loadLockedDates() {
+    const { data, error } = await sb.from('locked_dates').select('date_iso').eq('user_id', currentUser.id);
+    if (error) { console.error(error); return []; }
+    return data.map(r => r.date_iso);
+  }
+
+  async function loadCorrectionNotes() {
+    const { data, error } = await sb.from('correction_notes').select('date_iso, note').eq('user_id', currentUser.id);
+    if (error) { console.error(error); return {}; }
+    const obj = {};
+    data.forEach(r => obj[r.date_iso] = r.note);
+    return obj;
+  }
+
+  async function loadCustomCategories() {
+    const { data, error } = await sb.from('custom_categories').select('name').eq('user_id', currentUser.id);
+    if (error) { console.error(error); return []; }
+    return data.map(r => r.name);
+  }
+
+  async function loadUserSettings() {
+    const { data, error } = await sb.from('user_settings').select('*').eq('user_id', currentUser.id).maybeSingle();
+    if (error) { console.error(error); return {}; }
+    return data || {};
+  }
+
+  async function saveUserSettings() {
+    const { error } = await sb.from('user_settings').upsert({
+      user_id: currentUser.id, pin: savedPin, last_backup_ts: lastBackupTs, updated_at: new Date().toISOString()
+    });
+    if (error) console.error(error);
+  }
+
+  /* ══════════════════ CATEGORY UI ══════════════════ */
+
+  function populateCategorySelect() {
+    const sel = document.getElementById('category');
+    const current = sel.value;
+    const addOpt = sel.querySelector('option[value="__add_new__"]');
+    customCategories.forEach(cat => {
+      if (!sel.querySelector(`option[value="${CSS.escape(cat)}"]`)) {
+        const opt = document.createElement('option');
+        opt.value = cat;
+        opt.textContent = catEmojiFor(cat) + ' ' + cat;
+        sel.insertBefore(opt, addOpt);
+      }
+    });
+    if (current && current !== '__add_new__') sel.value = current;
+  }
+
+  async function handleCategorySelect() {
+    const sel = document.getElementById('category');
+    if (sel.value === '__add_new__') {
+      const name = prompt('Nayi category ka naam likho:');
+      sel.value = 'Other';
+      if (name && name.trim()) {
+        const clean = name.trim().slice(0, 24);
+        if (!customCategories.includes(clean) && !baseCatColors[clean]) {
+          customCategories.push(clean);
+          const { error } = await sb.from('custom_categories').insert({ user_id: currentUser.id, name: clean });
+          if (error) console.error(error);
+        }
+        populateCategorySelect();
+        sel.value = clean;
+        showToast('✅ "' + clean + '" category jud gayi!');
+      }
+    }
+  }
+
+  /* ══════════════════ ENTRY CRUD ══════════════════ */
 
   function setDate() {
     const d = new Date();
@@ -1002,39 +1143,6 @@
     document.getElementById('btnOut').disabled = locked;
   }
 
-  function populateCategorySelect() {
-    const sel = document.getElementById('category');
-    const current = sel.value;
-    const addOpt = sel.querySelector('option[value="__add_new__"]');
-    customCategories.forEach(cat => {
-      if (!sel.querySelector(`option[value="${CSS.escape(cat)}"]`)) {
-        const opt = document.createElement('option');
-        opt.value = cat;
-        opt.textContent = catEmojiFor(cat) + ' ' + cat;
-        sel.insertBefore(opt, addOpt);
-      }
-    });
-    if (current && current !== '__add_new__') sel.value = current;
-  }
-
-  function handleCategorySelect() {
-    const sel = document.getElementById('category');
-    if (sel.value === '__add_new__') {
-      const name = prompt('Nayi category ka naam likho:');
-      sel.value = 'Other';
-      if (name && name.trim()) {
-        const clean = name.trim().slice(0, 24);
-        if (!customCategories.includes(clean) && !baseCatColors[clean]) {
-          customCategories.push(clean);
-          saveCustomCategories();
-        }
-        populateCategorySelect();
-        sel.value = clean;
-        showToast('✅ "' + clean + '" category jud gayi!');
-      }
-    }
-  }
-
   async function addEntry(type) {
     const dateISO = document.getElementById('entryDate').value || todayISO();
     if (isLocked(dateISO)) { showToast('🔒 Ye tareekh lock hai, entry nahi ho sakti!'); return; }
@@ -1046,14 +1154,18 @@
     const note = document.getElementById('note').value.trim();
     if (!desc) { showToast('⚠️ Vivran likhna zaroori hai!'); return; }
     if (!amount || amount <= 0) { showToast('⚠️ Sahi rakam daalo!'); return; }
+
     const now = new Date();
-    const entry = {
-      id: genId(), type, desc, amount, method, category, note,
-      time: now.toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit'}),
-      dateISO,
-      date: dateISO.split('-').reverse().join('/')
-    };
-    entries.unshift(entry);
+    const timeStr = now.toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit'});
+
+    const { data, error } = await sb.from('entries').insert({
+      user_id: currentUser.id, type, description: desc, amount, method, category, note,
+      date_iso: dateISO, time_str: timeStr
+    }).select().single();
+
+    if (error) { console.error(error); showToast('⚠️ Save nahi ho paya: ' + error.message); return; }
+
+    entries.unshift(mapRowToEntry(data));
 
     document.getElementById('desc').value = '';
     document.getElementById('amount').value = '';
@@ -1061,8 +1173,6 @@
     populateDateScopes();
     render();
     showToast(type === 'income' ? '✅ Income add ho gayi!' : '✅ Expense add ho gayi!');
-
-    await save();
   }
 
   async function deleteEntry(id) {
@@ -1070,28 +1180,34 @@
     if (!entry) return;
     if (isLocked(entry.dateISO)) { showToast('🔒 Ye entry locked date ki hai, delete nahi ho sakti.'); return; }
     if (!confirm('Pakka is entry ko delete karna hai?\n"' + entry.desc + '" — ' + fmt(entry.amount))) return;
+
+    const { error } = await sb.from('entries').delete().eq('id', id).eq('user_id', currentUser.id);
+    if (error) { console.error(error); showToast('⚠️ Delete nahi ho paya'); return; }
+
     entries = entries.filter(e => e.id !== id);
     populateDateScopes();
     render();
     showToast('🗑️ Entry delete ho gayi.');
-    await save();
   }
 
   async function clearAll() {
     if (!entries.length) { showToast('Koi entry nahi hai!'); return; }
-    const unlockedCount = entries.filter(e => !isLocked(e.dateISO)).length;
-    if (!unlockedCount) { showToast('🔒 Saari dates PDF mai lock hain, kuch clear nahi hoga!'); return; }
-    const lockedCount = entries.length - unlockedCount;
+    const unlocked = entries.filter(e => !isLocked(e.dateISO));
+    if (!unlocked.length) { showToast('🔒 Saari dates PDF mai lock hain, kuch clear nahi hoga!'); return; }
+    const lockedCount = entries.length - unlocked.length;
     const msg = lockedCount
-      ? `Pakka ${unlockedCount} unlocked entries delete karni hain? (${lockedCount} locked entries safe rahengi)`
+      ? `Pakka ${unlocked.length} unlocked entries delete karni hain? (${lockedCount} locked entries safe rahengi)`
       : 'Pakka sab delete karna hai?';
-    if (confirm(msg)) {
-      entries = entries.filter(e => isLocked(e.dateISO));
-      populateDateScopes();
-      render();
-      showToast('🗑️ Unlocked entries saaf ho gayi!');
-      await save();
-    }
+    if (!confirm(msg)) return;
+
+    const ids = unlocked.map(e => e.id);
+    const { error } = await sb.from('entries').delete().in('id', ids).eq('user_id', currentUser.id);
+    if (error) { console.error(error); showToast('⚠️ Delete nahi ho paya'); return; }
+
+    entries = entries.filter(e => isLocked(e.dateISO));
+    populateDateScopes();
+    render();
+    showToast('🗑️ Unlocked entries saaf ho gayi!');
   }
 
   function setFilter(f, el) {
@@ -1134,10 +1250,16 @@
       renderReports();
       renderBackupStatus();
       renderPinStatus();
+      renderAccountInfo();
     }
   }
 
   function goToBackupTab() { switchTab('reports'); }
+
+  function renderAccountInfo() {
+    const el = document.getElementById('accountEmailText');
+    if (el && currentUser) el.textContent = '📧 Logged in as: ' + currentUser.email;
+  }
 
   function getAllDates() {
     const set = new Set(entries.map(e => e.dateISO).filter(Boolean));
@@ -1306,8 +1428,13 @@
     const ta = document.getElementById('cnote-' + iso);
     const val = ta ? ta.value.trim() : '';
     if (!val) { showToast('⚠️ Pehle note likho'); return; }
+
+    const { error } = await sb.from('correction_notes').upsert({
+      user_id: currentUser.id, date_iso: iso, note: val, updated_at: new Date().toISOString()
+    });
+    if (error) { console.error(error); showToast('⚠️ Save nahi hua'); return; }
+
     correctionNotes[iso] = val;
-    await saveCorrectionNotes();
     renderReports();
     showToast('✅ Correction note save ho gaya');
   }
@@ -1382,8 +1509,9 @@
     doc.save('MeraPaisa_' + iso + '.pdf');
 
     if (!isLocked(iso)) {
-      lockedDates.push(iso);
-      await saveLocked();
+      const { error } = await sb.from('locked_dates').insert({ user_id: currentUser.id, date_iso: iso });
+      if (error) { console.error(error); showToast('⚠️ Lock save nahi hua, lekin PDF ban gaya'); }
+      else { lockedDates.push(iso); }
       populateDateScopes();
       checkDateLock();
       showToast('✅ PDF ban gaya! Ye din ab lock ho gaya hai.');
@@ -1419,10 +1547,10 @@
 
     if (activeTab === 'entries') renderList();
     if (activeTab === 'chart') renderChart();
-    if (activeTab === 'reports') { renderReports(); renderBackupStatus(); renderPinStatus(); }
+    if (activeTab === 'reports') { renderReports(); renderBackupStatus(); renderPinStatus(); renderAccountInfo(); }
   }
 
-  /* ══════════════════ BACKUP & RESTORE SYSTEM ══════════════════ */
+  /* ══════════════════ BACKUP & RESTORE ══════════════════ */
 
   function pad2(n) { return String(n).padStart(2, '0'); }
 
@@ -1490,7 +1618,7 @@
       const now = new Date();
       downloadJSON(backup, 'MeraPaise_Backup_' + backupFileTimestamp(now) + '.json');
       lastBackupTs = now.getTime();
-      await saveLastBackupTs();
+      await saveUserSettings();
       renderBackupStatus();
       checkBackupReminder();
       showToast('✅ Backup download ho gaya!');
@@ -1540,7 +1668,7 @@
 
   function openImportModal(backup) {
     const txns = backup.data.transactions;
-    const dates = txns.map(t => t.dateISO).filter(Boolean).sort();
+    const dates = txns.map(t => t.dateISO || t.date_iso).filter(Boolean).sort();
     const dateRange = dates.length ? formatDateLabel(dates[0]) + ' — ' + formatDateLabel(dates[dates.length-1]) : 'N/A';
     const createdAt = backup.createdAt ? new Date(backup.createdAt).toLocaleString('en-IN') : 'Unknown';
 
@@ -1573,50 +1701,72 @@
       const safety = buildBackupObject();
       downloadJSON(safety, 'MeraPaise_SafetyBackup_' + backupFileTimestamp(new Date()) + '.json');
 
-      incoming.forEach(t => { if (!t.id) t.id = genId(); });
-      entries = incoming;
-      lockedDates = incomingLocked;
-      correctionNotes = incomingNotes;
-      customCategories = incomingCats;
-      await save();
-      await saveLocked();
-      await saveCorrectionNotes();
-      await saveCustomCategories();
+      await sb.from('entries').delete().eq('user_id', currentUser.id);
+      await sb.from('locked_dates').delete().eq('user_id', currentUser.id);
+      await sb.from('correction_notes').delete().eq('user_id', currentUser.id);
+      await sb.from('custom_categories').delete().eq('user_id', currentUser.id);
+
+      const rows = incoming.filter(t => (t.dateISO || t.date_iso)).map(t => ({
+        user_id: currentUser.id, type: t.type,
+        description: t.desc || t.description || '',
+        amount: t.amount, method: t.method || 'Other', category: t.category || 'Other',
+        note: t.note || '', date_iso: t.dateISO || t.date_iso, time_str: t.time || t.time_str || ''
+      }));
+      if (rows.length) await sb.from('entries').insert(rows);
+      if (incomingLocked.length) await sb.from('locked_dates').insert(incomingLocked.map(d => ({ user_id: currentUser.id, date_iso: d })));
+      const noteRows = Object.entries(incomingNotes).map(([d, n]) => ({ user_id: currentUser.id, date_iso: d, note: n }));
+      if (noteRows.length) await sb.from('correction_notes').insert(noteRows);
+      if (incomingCats.length) await sb.from('custom_categories').insert(incomingCats.map(c => ({ user_id: currentUser.id, name: c })));
+
+      entries = await loadEntries();
+      lockedDates = await loadLockedDates();
+      correctionNotes = await loadCorrectionNotes();
+      customCategories = await loadCustomCategories();
       populateDateScopes();
       populateCategorySelect();
       render();
       closeImportModal();
       showToast('✅ Backup restored successfully.');
     } else {
-      const existingIds = new Set(entries.map(e => e.id));
-      let added = 0;
+      const existingKeys = new Set(entries.map(e => `${e.dateISO}|${e.desc}|${e.amount}|${e.type}|${e.time}`));
+      const newRows = [];
       incoming.forEach(t => {
-        if (!t.id) t.id = genId();
-        if (!existingIds.has(t.id)) {
-          entries.push(t);
-          existingIds.add(t.id);
-          added++;
+        const dateISO = t.dateISO || t.date_iso;
+        if (!dateISO) return;
+        const desc = t.desc || t.description || '';
+        const key = `${dateISO}|${desc}|${t.amount}|${t.type}|${t.time || t.time_str || ''}`;
+        if (!existingKeys.has(key)) {
+          existingKeys.add(key);
+          newRows.push({
+            user_id: currentUser.id, type: t.type, description: desc, amount: t.amount,
+            method: t.method || 'Other', category: t.category || 'Other', note: t.note || '',
+            date_iso: dateISO, time_str: t.time || t.time_str || ''
+          });
         }
       });
-      incomingLocked.forEach(d => { if (!lockedDates.includes(d)) lockedDates.push(d); });
-      Object.keys(incomingNotes).forEach(d => { if (!correctionNotes[d]) correctionNotes[d] = incomingNotes[d]; });
-      incomingCats.forEach(c => { if (!customCategories.includes(c)) customCategories.push(c); });
+      let added = 0;
+      if (newRows.length) {
+        const { data, error } = await sb.from('entries').insert(newRows).select();
+        if (!error && data) added = data.length;
+        else if (error) console.error(error);
+      }
+      const newLocked = incomingLocked.filter(d => !lockedDates.includes(d));
+      if (newLocked.length) await sb.from('locked_dates').insert(newLocked.map(d => ({ user_id: currentUser.id, date_iso: d })));
+      const newNoteRows = Object.entries(incomingNotes).filter(([d]) => !correctionNotes[d]).map(([d, n]) => ({ user_id: currentUser.id, date_iso: d, note: n }));
+      if (newNoteRows.length) await sb.from('correction_notes').insert(newNoteRows);
+      const newCats = incomingCats.filter(c => !customCategories.includes(c));
+      if (newCats.length) await sb.from('custom_categories').insert(newCats.map(c => ({ user_id: currentUser.id, name: c })));
 
-      entries.sort((a, b) => (b.dateISO || '').localeCompare(a.dateISO || '') || (b.id > a.id ? 1 : -1));
-
-      await save();
-      await saveLocked();
-      await saveCorrectionNotes();
-      await saveCustomCategories();
+      entries = await loadEntries();
+      lockedDates = await loadLockedDates();
+      correctionNotes = await loadCorrectionNotes();
+      customCategories = await loadCustomCategories();
       populateDateScopes();
       populateCategorySelect();
       render();
       closeImportModal();
-      if (added > 0) {
-        showToast(`✅ Backup imported successfully. ${added} new records were added.`);
-      } else {
-        showToast('ℹ️ No duplicate records were added.');
-      }
+      if (added > 0) showToast(`✅ Backup imported successfully. ${added} new records were added.`);
+      else showToast('ℹ️ No duplicate records were added.');
     }
   }
 
@@ -1665,7 +1815,7 @@
   async function removePinDirect() {
     if (!confirm('Pakka PIN hatana hai? App bina lock ke khulega.')) return;
     savedPin = null;
-    await savePin();
+    await saveUserSettings();
     renderPinStatus();
     showToast('🔓 PIN hata diya gaya.');
   }
@@ -1737,7 +1887,7 @@
     }
     if (pinBuffer === pinFirstEntry) {
       savedPin = pinBuffer;
-      await savePin();
+      await saveUserSettings();
       document.getElementById('pinScreen').classList.remove('show');
       renderPinStatus();
       showToast('✅ PIN set ho gaya!');
@@ -1750,60 +1900,44 @@
     }
   }
 
-  /* ══════════════════ Init ══════════════════ */
+  /* ══════════════════ BOOT / INIT ══════════════════ */
 
-  async function init() {
+  async function boot() {
+    document.getElementById('loadingOverlay').style.display = 'flex';
     try {
-      const e = await window.storage.get('mp_entries_v2');
-      entries = e && e.value ? JSON.parse(e.value) : [];
-    } catch (err) {
-      entries = [];
-    }
-    try {
-      const l = await window.storage.get('mp_locked_dates');
-      lockedDates = l && l.value ? JSON.parse(l.value) : [];
-    } catch (err) {
-      lockedDates = [];
-    }
-    try {
-      const b = await window.storage.get('mp_last_backup_ts');
-      lastBackupTs = b && b.value ? Number(b.value) : null;
-      if (isNaN(lastBackupTs)) lastBackupTs = null;
-    } catch (err) {
-      lastBackupTs = null;
-    }
-    try {
-      const n = await window.storage.get('mp_correction_notes');
-      correctionNotes = n && n.value ? JSON.parse(n.value) : {};
-    } catch (err) {
-      correctionNotes = {};
-    }
-    try {
-      const c = await window.storage.get('mp_custom_categories');
-      customCategories = c && c.value ? JSON.parse(c.value) : [];
-    } catch (err) {
-      customCategories = [];
-    }
-    try {
-      const p = await window.storage.get('mp_pin');
-      savedPin = p && p.value ? p.value : null;
-    } catch (err) {
-      savedPin = null;
-    }
+      entries = await loadEntries();
+      lockedDates = await loadLockedDates();
+      correctionNotes = await loadCorrectionNotes();
+      customCategories = await loadCustomCategories();
+      const settings = await loadUserSettings();
+      savedPin = settings.pin || null;
+      lastBackupTs = settings.last_backup_ts || null;
 
-    migrateEntries();
-    setDate();
-    populateDateScopes();
-    populateCategorySelect();
-    render();
-    checkBackupReminder();
+      setDate();
+      populateDateScopes();
+      populateCategorySelect();
+      render();
+      checkBackupReminder();
+    } catch (err) {
+      console.error(err);
+      showToast('⚠️ Data load karne mein dikkat aayi');
+    }
     document.getElementById('loadingOverlay').style.display = 'none';
 
-    if (savedPin) {
-      startPinFlow('unlock');
-    }
+    if (savedPin) startPinFlow('unlock');
   }
-  init();
+
+  (async function start() {
+    const { data } = await sb.auth.getSession();
+    const session = data?.session;
+    if (session && session.user) {
+      currentUser = session.user;
+      boot();
+    } else {
+      document.getElementById('loadingOverlay').style.display = 'none';
+      document.getElementById('authScreen').classList.add('show');
+    }
+  })();
 
   function createRupee() {
     const el = document.createElement('div');

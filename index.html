@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Mera Paisa — Personal Money Manager</title>
+<title>Arentis — Personal Money Manager</title>
   <link rel="manifest" href="manifest.json">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <meta name="theme-color" content="#000000">
@@ -861,7 +861,7 @@
 </div>
 
 <div class="auth-screen" id="authScreen">
-  <h2>Mera <span>Paisa</span></h2>
+  <h2>Arentis</h2>
   <div class="auth-sub">Apna data cloud mein save karne ke liye login karo</div>
   <div class="auth-card">
     <div class="frow">
@@ -879,7 +879,7 @@
 </div>
 
 <div class="pin-screen" id="pinScreen">
-  <h2>Mera <span>Paisa</span></h2>
+  <h2>Arentis</h2>
   <div class="pin-sub" id="pinSub">Apna 4-digit PIN daalo</div>
   <div class="pin-dots" id="pinDots"></div>
   <div class="pin-error" id="pinError"></div>
@@ -913,7 +913,6 @@
   </div>
 
   <div class="account-dropdown" id="accountDropdown">
-    <div class="account-dropdown-arrow"></div>
     <div class="account-dropdown-card">
       <h3 style="font-size:14px;font-weight:600;margin-bottom:10px;color:var(--text)">🔐 App Lock (PIN)</h3>
       <p style="font-size:11.5px;color:var(--text2);line-height:1.6;margin-bottom:10px" id="pinStatusText">PIN set nahi hai.</p>
@@ -928,7 +927,7 @@
 
   <div class="header">
     <div class="header-left">
-      <h1>Mera <span>Paisa</span></h1>
+      <h1>Arentis</h1>
       <p>Personal Money Manager</p>
     </div>
     <div class="date-chip" id="dateChip"></div>
@@ -1883,7 +1882,7 @@
 
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(16);
-    doc.text('Mera Paisa - Daily Report', 14, y);
+    doc.text('Arentis - Daily Report', 14, y);
     y += 8;
     doc.setFontSize(11);
     doc.setFont('helvetica', 'normal');
@@ -1939,7 +1938,7 @@
       doc.text(lines, 14, y);
     }
 
-    doc.save('MeraPaisa_' + iso + '.pdf');
+    doc.save('Arentis_' + iso + '.pdf');
 
     if (!isLocked(iso)) {
       const { error } = await sb.from('locked_dates').insert({ user_id: currentUser.id, date_iso: iso });
@@ -1996,7 +1995,7 @@
 
   function buildBackupObject() {
     return {
-      appName: 'Mera Paisa',
+      appName: 'Arentis',
       backupVersion: 2,
       createdAt: new Date().toISOString(),
       data: {
@@ -2039,7 +2038,7 @@
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'MeraPaisa_' + backupFileTimestamp(new Date()) + '.csv';
+    a.download = 'Arentis_' + backupFileTimestamp(new Date()) + '.csv';
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -2051,7 +2050,7 @@
     try {
       const backup = buildBackupObject();
       const now = new Date();
-      downloadJSON(backup, 'MeraPaise_Backup_' + backupFileTimestamp(now) + '.json');
+      downloadJSON(backup, 'Arentis_Backup_' + backupFileTimestamp(now) + '.json');
       lastBackupTs = now.getTime();
       await saveUserSettings();
       renderBackupStatus();
@@ -2065,9 +2064,9 @@
 
   function validateBackupShape(obj) {
     if (!obj || typeof obj !== 'object') return 'Invalid backup file.';
-    if (obj.appName !== 'Mera Paisa') return 'This file is not a valid Mera Paisa backup.';
-    if (!obj.data || typeof obj.data !== 'object') return 'This file is not a valid Mera Paisa backup.';
-    if (!Array.isArray(obj.data.transactions)) return 'This file is not a valid Mera Paisa backup.';
+    if (obj.appName !== 'Arentis') return 'This file is not a valid Arentis backup.';
+    if (!obj.data || typeof obj.data !== 'object') return 'This file is not a valid Arentis backup.';
+    if (!Array.isArray(obj.data.transactions)) return 'This file is not a valid Arentis backup.';
     if (!obj.data.transactions.length) return 'Backup file khaali hai, koi records nahi mile.';
     for (const t of obj.data.transactions) {
       if (typeof t !== 'object' || !('amount' in t) || !('type' in t)) {
@@ -2134,7 +2133,7 @@
       const sure = confirm('Aapka current data is backup se REPLACE ho jaayega.\nEk safety backup pehle download hogi.\n\nContinue karein?');
       if (!sure) return;
       const safety = buildBackupObject();
-      downloadJSON(safety, 'MeraPaise_SafetyBackup_' + backupFileTimestamp(new Date()) + '.json');
+      downloadJSON(safety, 'Arentis_SafetyBackup_' + backupFileTimestamp(new Date()) + '.json');
 
       await sb.from('entries').delete().eq('user_id', currentUser.id);
       await sb.from('locked_dates').delete().eq('user_id', currentUser.id);

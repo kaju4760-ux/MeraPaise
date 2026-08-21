@@ -2,7 +2,7 @@
   "name": "Arentis",
   "short_name": "Arentis",
   "id": "/Arentis/",
-  "start_url": "/index.html/",
+  "start_url": "MeraPaise",
   "scope": "/Arentis/",
   "display": "standalone",
   "background_color": "#ffffff",

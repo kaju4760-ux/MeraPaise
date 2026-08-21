@@ -54,10 +54,156 @@
     z-index: 0;
   }
 
-  .wrapper { position: relative; z-index: 1; max-width: 480px; margin: 0 auto; padding: 0 16px 80px; }
+  .wrapper { position: relative; z-index: 1; max-width: 480px; margin: 0 auto; padding: 0 16px 100px; }
+
+  /* ── Profile bar (avatar + greeting + bell) ── */
+  .profile-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 0 0;
+  }
+  .profile-left { display: flex; align-items: center; gap: 10px; }
+  .profile-avatar {
+    width: 40px; height: 40px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--green), #22a35a);
+    color: #0a1a10; display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 16px; flex-shrink: 0;
+    font-family: 'DM Sans', sans-serif;
+    box-shadow: 0 2px 10px rgba(74,222,128,0.25);
+    overflow: hidden;
+  }
+  .profile-avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+  .profile-text { display: flex; flex-direction: column; line-height: 1.25; }
+  .profile-greeting { font-size: 11.5px; color: var(--text2); }
+  .profile-name { font-size: 14.5px; font-weight: 600; color: var(--text); }
+  .bell-btn {
+    position: relative;
+    background: var(--surface2);
+    border: 0.5px solid var(--border2);
+    border-radius: 50%;
+    width: 40px; height: 40px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 17px; cursor: pointer;
+    transition: background 0.2s ease, transform 0.15s ease;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+  }
+  .bell-btn:hover { background: var(--surface); }
+  .bell-btn:active { transform: scale(0.94); }
+  .bell-dot {
+    position: absolute; top: 3px; right: 3px;
+    min-width: 16px; height: 16px; padding: 0 4px;
+    background: var(--green); color: #0a1a10;
+    border-radius: 10px; border: 2px solid var(--bg);
+    font-size: 9px; font-weight: 700;
+    display: none; align-items: center; justify-content: center;
+    font-family: 'DM Sans', sans-serif; line-height: 1;
+  }
+
+  /* ── Notification panel ── */
+  .notif-dropdown {
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
+    transition: max-height 0.28s ease, opacity 0.2s ease, margin 0.28s ease;
+    margin-top: 0;
+  }
+  .notif-dropdown.show {
+    max-height: 600px;
+    opacity: 1;
+    margin-top: 10px;
+  }
+  .notif-dropdown-arrow {
+    width: 14px; height: 14px;
+    background: var(--surface);
+    border-right: 0.5px solid var(--border2);
+    border-top: 0.5px solid var(--border2);
+    transform: rotate(45deg);
+    margin: 0 18px -7px auto;
+    position: relative;
+    z-index: 1;
+  }
+  .notif-dropdown-card {
+    background: var(--surface);
+    border: 0.5px solid var(--border2);
+    border-radius: var(--radius);
+    padding: 16px;
+  }
+  .notif-dropdown-header h3 { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+  .notif-item {
+    display: flex; gap: 10px; align-items: flex-start;
+    padding: 12px 0; border-bottom: 0.5px solid var(--border);
+  }
+  .notif-item:last-child { border-bottom: none; padding-bottom: 2px; }
+  .notif-icon {
+    font-size: 16px; width: 32px; height: 32px; border-radius: 9px;
+    background: var(--surface2); display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .notif-body { flex: 1; min-width: 0; }
+  .notif-title { font-size: 12.5px; font-weight: 600; color: var(--text); }
+  .notif-desc { font-size: 11.5px; color: var(--text2); margin-top: 2px; line-height: 1.5; }
+  .notif-action {
+    margin-top: 8px; font-size: 11px; padding: 5px 12px; border-radius: 20px;
+    background: var(--green-dim); color: var(--green); border: 0.5px solid var(--green-border);
+    cursor: pointer; font-family: 'DM Sans', sans-serif;
+  }
+  .notif-dismiss {
+    flex-shrink: 0; width: 22px; height: 22px; border-radius: 7px;
+    background: var(--surface2); border: 0.5px solid var(--border2); color: var(--text2);
+    font-size: 11px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+  }
+  .notif-dismiss:hover { background: var(--red-dim); color: var(--red); border-color: var(--red-border); }
+  .notif-empty { text-align: center; padding: 20px 10px; font-size: 12.5px; color: var(--text3); }
+
+  /* profile avatar/left gets a visible highlight while dropdown is open */
+  .profile-left {
+    border-radius: 24px;
+    padding: 4px 8px 4px 4px;
+    transition: background 0.2s ease;
+  }
+  .profile-left.open {
+    background: var(--surface2);
+  }
+  .profile-left.open .profile-avatar {
+    box-shadow: 0 0 0 3px var(--green-dim), 0 2px 10px rgba(74,222,128,0.25);
+  }
+
+  /* dropdown panel that opens under the avatar */
+  .account-dropdown {
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
+    transition: max-height 0.28s ease, opacity 0.2s ease, margin 0.28s ease;
+    margin-top: 0;
+  }
+  .account-dropdown.show {
+    max-height: 600px;
+    opacity: 1;
+    margin-top: 10px;
+  }
+  .account-dropdown-arrow {
+    width: 14px; height: 14px;
+    background: var(--surface);
+    border-left: 0.5px solid var(--border2);
+    border-top: 0.5px solid var(--border2);
+    transform: rotate(45deg);
+    margin: 0 0 -7px 18px;
+    position: relative;
+    z-index: 1;
+  }
+  .account-dropdown-card {
+    background: var(--surface);
+    border: 0.5px solid var(--border2);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-bottom: 10px;
+    position: relative;
+  }
 
   .header {
-    padding: 28px 0 20px;
+    padding: 14px 0 20px;
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
@@ -363,6 +509,68 @@
   .cat-bar { flex: 2; height: 4px; background: var(--surface2); border-radius: 2px; overflow: hidden; position: relative; }
   .cat-bar-fill { height: 100%; border-radius: 2px; position: relative; overflow: hidden; transition: width 0.6s cubic-bezier(.4,0,.2,1); }
 
+  /* ── Donut chart (category breakdown ring) ── */
+  .donut-card {
+    background: var(--surface);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px 20px;
+    margin-bottom: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 18px;
+  }
+  .donut-wrap {
+    position: relative;
+    width: 180px;
+    height: 180px;
+    flex-shrink: 0;
+  }
+  .donut-ring {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    position: relative;
+    transition: background 0.4s ease;
+  }
+  .donut-ring::after {
+    content: '';
+    position: absolute;
+    inset: 26px;
+    background: var(--surface);
+    border-radius: 50%;
+  }
+  .donut-center {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    z-index: 1;
+  }
+  .donut-label { font-size: 10.5px; color: var(--text2); text-transform: uppercase; letter-spacing: 0.5px; }
+  .donut-value { font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 700; color: var(--text); margin-top: 5px; }
+  .donut-sub { font-size: 11px; color: var(--text2); margin-top: 3px; }
+  .donut-legend {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 9px 12px;
+    width: 100%;
+  }
+  .donut-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--text2);
+    min-width: 0;
+  }
+  .donut-legend-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .donut-legend-item span:last-child { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
   .reports-section { display: none; }
   .reports-section.active { display: block; }
   .report-note {
@@ -413,26 +621,56 @@
   }
   .existing-note { font-size: 11.5px; color: var(--text2); background: var(--surface2); border-radius: var(--radius-sm); padding: 8px 10px; margin-top: 8px; line-height: 1.5; }
 
+  /* ══════════════════ Floating pill bottom nav ══════════════════ */
   .bottom-nav {
-    position: fixed; bottom: 0; left: 0; right: 0;
-    background: rgba(13,15,20,0.95);
+    position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%);
+    background: rgba(22,26,35,0.92);
     backdrop-filter: blur(20px);
-    border-top: 0.5px solid var(--border2);
+    border: 0.5px solid var(--border2);
+    border-radius: 999px;
     display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px;
     z-index: 100;
-    padding-bottom: env(safe-area-inset-bottom);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.45);
+    max-width: calc(100% - 32px);
   }
   .nav-btn {
-    flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px;
-    padding: 12px 8px; background: none; border: none; cursor: pointer;
-    color: var(--text3); font-family: 'DM Sans', sans-serif; font-size: 10px;
-    transition: color 0.2s;
+    display: flex; align-items: center; gap: 6px;
+    padding: 10px 14px; background: none; border: none; cursor: pointer;
+    color: var(--text2); font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600;
+    border-radius: 999px;
+    transition: all 0.25s cubic-bezier(.4,0,.2,1);
+    white-space: nowrap;
   }
-  .nav-btn .nav-icon { font-size: 20px; line-height: 1; }
-  .nav-btn.active { color: var(--green); }
+  .nav-btn .nav-icon {
+    font-size: 15px; line-height: 1;
+    width: 22px; height: 22px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--surface2);
+    flex-shrink: 0;
+    transition: all 0.25s cubic-bezier(.4,0,.2,1);
+  }
+  .nav-btn .nav-label {
+    max-width: 0; opacity: 0; overflow: hidden;
+    transition: max-width 0.25s cubic-bezier(.4,0,.2,1), opacity 0.2s ease;
+  }
+  .nav-btn.active {
+    color: #0a1a10;
+    background: var(--green);
+    box-shadow: 0 0 16px rgba(74,222,128,0.4);
+  }
+  .nav-btn.active .nav-icon {
+    background: rgba(10,26,16,0.15);
+  }
+  .nav-btn.active .nav-label {
+    max-width: 80px; opacity: 1; margin-left: 0;
+  }
+  .nav-btn:not(.active):active { transform: scale(0.92); }
 
   .toast {
-    position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%) translateY(20px);
+    position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%) translateY(20px);
     background: var(--surface2); border: 0.5px solid var(--border2);
     border-radius: 20px; padding: 10px 20px; font-size: 13px; color: var(--text);
     opacity: 0; transition: all 0.3s; z-index: 200; white-space: nowrap;
@@ -649,6 +887,44 @@
 </div>
 
 <div class="wrapper">
+
+  <!-- ═══ Profile bar: avatar + greeting + bell ═══ -->
+  <div class="profile-bar">
+    <div class="profile-left" id="profileLeft" onclick="toggleAccountDropdown()" style="cursor:pointer">
+      <div class="profile-avatar" id="profileAvatar">M</div>
+      <div class="profile-text">
+        <span class="profile-greeting">Hello,</span>
+        <span class="profile-name" id="profileName">User</span>
+      </div>
+    </div>
+    <button class="bell-btn" id="bellBtn" onclick="toggleNotifPanel()" aria-label="Notifications">
+      🔔
+      <span class="bell-dot" id="bellDot"></span>
+    </button>
+  </div>
+
+  <div class="notif-dropdown" id="notifDropdown">
+    <div class="notif-dropdown-arrow"></div>
+    <div class="notif-dropdown-card">
+      <div class="notif-dropdown-header"><h3>🔔 Alerts</h3></div>
+      <div id="notifListBody"></div>
+    </div>
+  </div>
+
+  <div class="account-dropdown" id="accountDropdown">
+    <div class="account-dropdown-arrow"></div>
+    <div class="account-dropdown-card">
+      <h3 style="font-size:14px;font-weight:600;margin-bottom:10px;color:var(--text)">🔐 App Lock (PIN)</h3>
+      <p style="font-size:11.5px;color:var(--text2);line-height:1.6;margin-bottom:10px" id="pinStatusText">PIN set nahi hai.</p>
+      <button class="btn-pdf" id="pinToggleBtn" onclick="openPinManage()">PIN Set Karo</button>
+    </div>
+    <div class="account-dropdown-card">
+      <h3 style="font-size:14px;font-weight:600;margin-bottom:10px;color:var(--text)">👤 Account</h3>
+      <p style="font-size:11.5px;color:var(--text2);line-height:1.6" id="accountEmailText">—</p>
+      <button class="logout-btn" onclick="handleLogout()">Logout Karo</button>
+    </div>
+  </div>
+
   <div class="header">
     <div class="header-left">
       <h1>Mera <span>Paisa</span></h1>
@@ -690,13 +966,6 @@
       </div>
     </div>
     <div class="paytm-badge">Paytm Cash</div>
-  </div>
-
-  <div class="tabs">
-    <div class="tab active" onclick="switchTab('entry')">+ Entry</div>
-    <div class="tab" onclick="switchTab('entries')">Entries</div>
-    <div class="tab" onclick="switchTab('chart')">Chart</div>
-    <div class="tab" onclick="switchTab('reports')">Reports</div>
   </div>
 
   <div class="form-section active" id="tab-entry">
@@ -823,9 +1092,16 @@
       </div>
     </div>
 
-    <div class="chart-card">
-      <h3>Category Breakdown</h3>
-      <div class="cat-grid" id="catGrid"><p style="color:var(--text3);font-size:13px;text-align:center;padding:20px 0">Koi entries nahi</p></div>
+    <div class="donut-card">
+      <div class="donut-wrap">
+        <div class="donut-ring" id="donutRing"></div>
+        <div class="donut-center">
+          <div class="donut-label">Total Kharch</div>
+          <div class="donut-value" id="donutValue">₹0</div>
+          <div class="donut-sub" id="donutSub">0 categories</div>
+        </div>
+      </div>
+      <div class="donut-legend" id="donutLegend"></div>
     </div>
   </div>
 
@@ -850,16 +1126,6 @@
       <input type="file" id="importFileInput" accept="application/json,.json" onchange="handleImportFile(event)" />
       <p style="font-size:11px;color:var(--text3);margin-top:12px;line-height:1.5">☁️ Aapka data Supabase cloud database mein securely save hota hai, sirf aap hi access kar sakte ho.</p>
     </div>
-    <div class="report-card" id="pinSettingsCard">
-      <h3 style="font-size:14px;font-weight:600;margin-bottom:10px;color:var(--text)">🔐 App Lock (PIN)</h3>
-      <p style="font-size:11.5px;color:var(--text2);line-height:1.6;margin-bottom:10px" id="pinStatusText">PIN set nahi hai.</p>
-      <button class="btn-pdf" id="pinToggleBtn" onclick="openPinManage()">PIN Set Karo</button>
-    </div>
-    <div class="report-card" id="accountCard">
-      <h3 style="font-size:14px;font-weight:600;margin-bottom:10px;color:var(--text)">👤 Account</h3>
-      <p style="font-size:11.5px;color:var(--text2);line-height:1.6" id="accountEmailText">—</p>
-      <button class="logout-btn" onclick="handleLogout()">Logout Karo</button>
-    </div>
     <div class="report-note">💡 Har din ka PDF bana kar download karo. Ek baar PDF ban jaaye to us din ki entries lock ho jaati hain — fir naya entry ya edit us tareekh ke liye nahi ho sakta. Agar koi galti reh gayi ho to neeche "Correction Note" mein likh sakte ho.</div>
     <div id="reportsList"></div>
   </div>
@@ -867,16 +1133,16 @@
 
 <div class="bottom-nav">
   <button class="nav-btn active" id="nav-entry" onclick="switchTab('entry')">
-    <span class="nav-icon">✏️</span>Entry
+    <span class="nav-icon">✏️</span><span class="nav-label">Entry</span>
   </button>
   <button class="nav-btn" id="nav-entries" onclick="switchTab('entries')">
-    <span class="nav-icon">📋</span>List
+    <span class="nav-icon">📋</span><span class="nav-label">List</span>
   </button>
   <button class="nav-btn" id="nav-chart" onclick="switchTab('chart')">
-    <span class="nav-icon">📊</span>Chart
+    <span class="nav-icon">📊</span><span class="nav-label">Chart</span>
   </button>
   <button class="nav-btn" id="nav-reports" onclick="switchTab('reports')">
-    <span class="nav-icon">📄</span>Reports
+    <span class="nav-icon">📄</span><span class="nav-label">Reports</span>
   </button>
 </div>
 
@@ -917,6 +1183,9 @@
   let pinFirstEntry = '';
   let currentUser = null;
   let authMode = 'login'; // 'login' | 'signup'
+  let notifOpen = false;
+  let dismissedNotifs = new Set();
+  let notifActionsMap = {};
 
   const baseCatColors = {
     Khaana:'#4ade80', Transport:'#60a5fa', Bill:'#fbbf24', Shopping:'#f472b6',
@@ -962,6 +1231,19 @@
     t.textContent = msg;
     t.classList.add('show');
     setTimeout(() => t.classList.remove('show'), 2800);
+  }
+
+  /* ══════════════════ PROFILE BAR ══════════════════ */
+
+  function updateProfileUI() {
+    if (!currentUser) return;
+    const email = currentUser.email || '';
+    const namePart = (email.split('@')[0] || 'User').replace(/[._-]+/g, ' ');
+    const displayName = namePart.replace(/\b\w/g, c => c.toUpperCase());
+    const nameEl = document.getElementById('profileName');
+    const avatarEl = document.getElementById('profileAvatar');
+    if (nameEl) nameEl.textContent = displayName || 'User';
+    if (avatarEl) avatarEl.textContent = (displayName || 'U').charAt(0).toUpperCase();
   }
 
   /* ══════════════════ AUTH ══════════════════ */
@@ -1025,6 +1307,7 @@
         const be = document.getElementById('authSubmitBtn');
         be.disabled = false;
         be.textContent = authMode === 'login' ? 'Login Karo' : 'Sign Up Karo';
+        updateProfileUI();
         boot();
       }
     } else {
@@ -1225,27 +1508,22 @@
   function switchTab(tab) {
     activeTab = tab;
     document.querySelectorAll('.form-section, .entries-section, .chart-section, .reports-section').forEach(s => s.classList.remove('active'));
-    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
     document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
 
     if (tab === 'entry') {
       document.getElementById('tab-entry').classList.add('active');
-      document.querySelectorAll('.tab')[0].classList.add('active');
       document.getElementById('nav-entry').classList.add('active');
       checkDateLock();
     } else if (tab === 'entries') {
       document.getElementById('tab-entries').classList.add('active');
-      document.querySelectorAll('.tab')[1].classList.add('active');
       document.getElementById('nav-entries').classList.add('active');
       renderList();
     } else if (tab === 'chart') {
       document.getElementById('tab-chart').classList.add('active');
-      document.querySelectorAll('.tab')[2].classList.add('active');
       document.getElementById('nav-chart').classList.add('active');
       renderChart();
     } else {
       document.getElementById('tab-reports').classList.add('active');
-      document.querySelectorAll('.tab')[3].classList.add('active');
       document.getElementById('nav-reports').classList.add('active');
       renderReports();
       renderBackupStatus();
@@ -1255,6 +1533,133 @@
   }
 
   function goToBackupTab() { switchTab('reports'); }
+
+  let accountDropdownOpen = false;
+  function toggleAccountDropdown(forceState) {
+    accountDropdownOpen = typeof forceState === 'boolean' ? forceState : !accountDropdownOpen;
+    if (accountDropdownOpen) toggleNotifPanel(false);
+    const panel = document.getElementById('accountDropdown');
+    const left = document.getElementById('profileLeft');
+    panel.classList.toggle('show', accountDropdownOpen);
+    left.classList.toggle('open', accountDropdownOpen);
+    if (accountDropdownOpen) {
+      renderPinStatus();
+      renderAccountInfo();
+    }
+  }
+
+  function toggleNotifPanel(forceState) {
+    notifOpen = typeof forceState === 'boolean' ? forceState : !notifOpen;
+    if (notifOpen) toggleAccountDropdown(false);
+    const panel = document.getElementById('notifDropdown');
+    panel.classList.toggle('show', notifOpen);
+    if (notifOpen) renderNotifPanel();
+  }
+
+  document.addEventListener('click', function(e) {
+    const accPanel = document.getElementById('accountDropdown');
+    const accLeft = document.getElementById('profileLeft');
+    if (accountDropdownOpen && !accPanel.contains(e.target) && !accLeft.contains(e.target)) {
+      toggleAccountDropdown(false);
+    }
+    const notifPanel = document.getElementById('notifDropdown');
+    const bell = document.getElementById('bellBtn');
+    if (notifOpen && !notifPanel.contains(e.target) && !bell.contains(e.target)) {
+      toggleNotifPanel(false);
+    }
+  });
+
+  /* ══════════════════ NOTIFICATIONS ══════════════════ */
+
+  function buildNotifications() {
+    const list = [];
+    notifActionsMap = {};
+    const sevenDays = 7 * 24 * 60 * 60 * 1000;
+    const overdueBackup = entries.length && (!lastBackupTs || (Date.now() - lastBackupTs) > sevenDays);
+    if (overdueBackup) {
+      list.push({
+        id: 'backup', icon: '💾', title: 'Backup purana hai',
+        desc: lastBackupTs ? ('Last backup: ' + new Date(lastBackupTs).toLocaleDateString('en-IN')) : 'Abhi tak koi backup nahi liya gaya',
+        actionLabel: 'Backup Karo'
+      });
+      notifActionsMap['backup'] = () => { toggleNotifPanel(false); switchTab('reports'); };
+    }
+    const today = todayISO();
+    const unlockedOld = getAllDates().filter(d => d !== today && !isLocked(d));
+    if (unlockedOld.length) {
+      list.push({
+        id: 'unlocked', icon: '🔓', title: unlockedOld.length + ' purane din lock nahi hue',
+        desc: 'PDF banake apne purane din ke reports lock karo',
+        actionLabel: 'Reports Dekho'
+      });
+      notifActionsMap['unlocked'] = () => { toggleNotifPanel(false); switchTab('reports'); };
+    }
+    const todayEntries = entries.filter(e => e.dateISO === today);
+    if (!todayEntries.length) {
+      list.push({
+        id: 'noentrytoday', icon: '📝', title: 'Aaj ki koi entry nahi hai',
+        desc: 'Aaj ka kharch ya income record karo',
+        actionLabel: 'Entry Daalo'
+      });
+      notifActionsMap['noentrytoday'] = () => { toggleNotifPanel(false); switchTab('entry'); };
+    }
+    return list.filter(n => !dismissedNotifs.has(n.id));
+  }
+
+  function updateNotifBadge() {
+    const list = buildNotifications();
+    const dot = document.getElementById('bellDot');
+    if (list.length) {
+      dot.style.display = 'flex';
+      dot.textContent = list.length > 9 ? '9+' : String(list.length);
+    } else {
+      dot.style.display = 'none';
+      dot.textContent = '';
+    }
+  }
+
+  function renderNotifPanel() {
+    const body = document.getElementById('notifListBody');
+    const list = buildNotifications();
+    if (!list.length) {
+      body.innerHTML = '<div class="notif-empty">🎉 Koi naya alert nahi hai</div>';
+      return;
+    }
+    body.innerHTML = list.map(n => `
+      <div class="notif-item">
+        <div class="notif-icon">${n.icon}</div>
+        <div class="notif-body">
+          <div class="notif-title">${n.title}</div>
+          <div class="notif-desc">${n.desc}</div>
+          <button class="notif-action" onclick="handleNotifAction('${n.id}')">${n.actionLabel}</button>
+        </div>
+        <button class="notif-dismiss" onclick="dismissNotif('${n.id}')" title="Dismiss">✕</button>
+      </div>
+    `).join('');
+  }
+
+  function handleNotifAction(id) {
+    if (notifActionsMap[id]) notifActionsMap[id]();
+  }
+
+  function dismissNotif(id) {
+    dismissedNotifs.add(id);
+    refreshNotifications();
+    showToast('Alert hata diya');
+  }
+
+  function refreshNotifications() {
+    updateNotifBadge();
+    if (notifOpen) renderNotifPanel();
+  }
+
+  function openAccountSettings() {
+    switchTab('reports');
+    setTimeout(() => {
+      const el = document.getElementById('pinSettingsCard');
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 50);
+  }
 
   function renderAccountInfo() {
     const el = document.getElementById('accountEmailText');
@@ -1370,15 +1775,42 @@
     document.getElementById('bPaytm').style.width = Math.round(paytm / max * 100) + '%';
 
     const cats = Object.entries(catMap).sort((a,b) => b[1]-a[1]);
-    const maxCat = cats[0] ? cats[0][1] : 1;
-    const grid = document.getElementById('catGrid');
-    if (!cats.length) { grid.innerHTML = '<p style="color:var(--text3);font-size:13px;text-align:center;padding:20px 0">Koi entries nahi</p>'; return; }
-    grid.innerHTML = cats.map(([cat, val]) => `
-      <div class="cat-row">
-        <div class="cat-dot" style="background:${catColorFor(cat)}"></div>
-        <span class="cat-name">${catEmojiFor(cat)} ${cat}</span>
-        <div class="cat-bar"><div class="cat-bar-fill" style="width:${Math.round(val/maxCat*100)}%;background:${catColorFor(cat)}"></div></div>
-        <span class="cat-val" style="color:${catColorFor(cat)}">${fmt(val)}</span>
+    renderDonutChart(cats, expense);
+  }
+
+  function renderDonutChart(cats, totalExpense) {
+    const ring = document.getElementById('donutRing');
+    const legend = document.getElementById('donutLegend');
+    const valueEl = document.getElementById('donutValue');
+    const subEl = document.getElementById('donutSub');
+
+    valueEl.textContent = fmt(totalExpense);
+    subEl.textContent = cats.length + (cats.length === 1 ? ' category' : ' categories');
+
+    if (!cats.length || totalExpense <= 0) {
+      ring.style.background = 'var(--surface2)';
+      legend.innerHTML = '<p style="grid-column:1/-1;text-align:center;color:var(--text3);font-size:12px;padding:6px 0">Koi expense nahi</p>';
+      return;
+    }
+
+    const gapDeg = 3;
+    let angle = 0;
+    const stops = [];
+    cats.forEach(([cat, val]) => {
+      const deg = (val / totalExpense) * 360;
+      const start = angle;
+      const segEnd = Math.max(start, angle + deg - gapDeg);
+      const fullEnd = angle + deg;
+      stops.push(`${catColorFor(cat)} ${start}deg ${segEnd}deg`);
+      stops.push(`transparent ${segEnd}deg ${fullEnd}deg`);
+      angle = fullEnd;
+    });
+    ring.style.background = `conic-gradient(${stops.join(',')})`;
+
+    legend.innerHTML = cats.map(([cat, val]) => `
+      <div class="donut-legend-item">
+        <span class="donut-legend-dot" style="background:${catColorFor(cat)}"></span>
+        <span>${catEmojiFor(cat)} ${cat} — ${Math.round(val / totalExpense * 100)}%</span>
       </div>
     `).join('');
   }
@@ -1520,6 +1952,7 @@
     }
     renderReports();
     if (activeTab === 'entries') renderList();
+    refreshNotifications();
   }
 
   function render() {
@@ -1548,6 +1981,7 @@
     if (activeTab === 'entries') renderList();
     if (activeTab === 'chart') renderChart();
     if (activeTab === 'reports') { renderReports(); renderBackupStatus(); renderPinStatus(); renderAccountInfo(); }
+    checkBackupReminder();
   }
 
   /* ══════════════════ BACKUP & RESTORE ══════════════════ */
@@ -1782,10 +2216,14 @@
 
   function checkBackupReminder() {
     const banner = document.getElementById('backupReminder');
-    if (!entries.length) { banner.classList.remove('show'); return; }
-    const sevenDays = 7 * 24 * 60 * 60 * 1000;
-    const overdue = !lastBackupTs || (Date.now() - lastBackupTs) > sevenDays;
-    banner.classList.toggle('show', overdue);
+    if (!entries.length) {
+      banner.classList.remove('show');
+    } else {
+      const sevenDays = 7 * 24 * 60 * 60 * 1000;
+      const overdue = !lastBackupTs || (Date.now() - lastBackupTs) > sevenDays;
+      banner.classList.toggle('show', overdue);
+    }
+    refreshNotifications();
   }
 
   /* ══════════════════ PIN LOCK ══════════════════ */
@@ -1916,6 +2354,7 @@
       setDate();
       populateDateScopes();
       populateCategorySelect();
+      updateProfileUI();
       render();
       checkBackupReminder();
     } catch (err) {
@@ -1932,6 +2371,7 @@
     const session = data?.session;
     if (session && session.user) {
       currentUser = session.user;
+      updateProfileUI();
       boot();
     } else {
       document.getElementById('loadingOverlay').style.display = 'none';
